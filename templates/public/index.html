@@ -1,0 +1,66 @@
+{% extends "public/templates/base_public.html" %}
+
+{% block title %}OCP - Phosphates Price Preditcion{% endblock title %}
+{% block nav %}
+<header>
+    <h1>PPP</h1>
+    <div class="nav-links">
+    <nav >
+      <ul>
+        <li><a href="/index">Home</a></li>
+        <li><a href="/about">About Us</a></li>
+        
+        <li><a href="">News</a></li>
+        <li><a href="">Contact Us</a></li>
+        <li><a href="/login">Log in</a></li>
+        <li><a href="/inscrire">Sign up</a></li>
+      </ul>
+    </nav>
+  </div>
+  </header>
+{% endblock nav %}
+{% block content %}
+
+  <main>
+    <h2><br><br>Welcome to Phosphates Prices Preditcion</h2>
+    <p>A project that aims to maximize the profits of OCP and its partners!</p> 
+  </main>
+<br>
+<table>
+  <thead>
+    <tr>
+      
+      <th>Logo</th>
+      <th>Name</th>
+      <th>Price/Ton </th>
+      <th>Test prediction (current month) </th>
+      <th>Prediction (next month)</th>
+
+      
+    </tr>
+  </thead>
+  <tbody>
+    
+ 
+    <tr>
+      
+      <td><img src="https://cdn.britannica.com/39/131239-004-B7D364FB/pyrolusite-Lithiophilite-quartz-Lithium-manganese-phosphate-Wickenburg.jpg" alt="phosphate"></td>
+      <td>Phosphates</td>
+      <td>  {{ actual_price }} $ </td>
+      <td><a class="button" href="/phosphates">start</a></td>
+      <td><a class="button" href="/nextmonth">start</a></td>
+
+      
+    </tr>
+    
+  </tbody>
+</table>
+
+
+<br><br><br><br><br><br><br><br><br><br><br>
+
+<footer>
+  
+</footer>
+
+{% endblock content %}

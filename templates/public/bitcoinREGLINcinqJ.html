@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bitcoin Price Predictions</title>
+</head>
+<body>
+    <h1>Bitcoin Price Predictions for the Next 5 Days</h1>
+    
+    <div>
+        <img src="{{ url_for('static', filename='image.png') }}" alt="Bitcoin Price Predictions">
+    </div>
+    
+    <h2>Predictions:</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Prediction</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for prediction in predictions.iterrows() %}
+            <tr>
+                <td>{{ prediction[1]['Date'] }}</td>
+                <td>{{ prediction[1]['Prediction'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

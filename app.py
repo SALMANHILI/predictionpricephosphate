@@ -91,6 +91,7 @@ def inscrire():
 df = pd.read_csv("prix.csv")
 df = pd.DataFrame(df, columns=['Mois', 'Prix', 'Variation'])
 
+
 """from sklearn.preprocessing import OneHotEncoder
 
 # Convert month names to one-hot encoded vectors
@@ -113,6 +114,18 @@ df['Mois'] = df['Mois'].str.replace('.', '')  # Remove percentage signs
 
 
 df = df.dropna()
+df.head(20)
+df.dtypes
+df.describe()
+
+df.dtypes
+"""for x in df:
+    if df[x].dtypes == "int64":
+        df[x] = df[x].astype(float)
+        print (df[x].dtypes)"""
+
+
+
 
 @app.route("/prediction",methods=['POST'])
 def prediction():
@@ -125,9 +138,19 @@ def phosphatesRF():
     
     # Create and train the model
     # Train the model
+    #df = df.select_dtypes()
+    
+    df=df.fillna(df.mean())
     X = df[['Variation']]  # Select the 'Variation' column as input feature
     y = df['Prix']  # Select the 'Prix' column as the target variable
-    model = RandomForestRegressor()
+    from sklearn.model_selection import train_test_split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+    
+    from sklearn.ensemble import RandomForestRegressor
+    regressor = RandomForestRegressor(n_estimators = 1000, random_state = 42)
+    regressor.fit(X_train, y_train)
+    
+    """model = RandomForestRegressor()
     model.fit(X, y)  # Train the model
 
     # Prepare input data for prediction
@@ -138,13 +161,36 @@ def phosphatesRF():
     predicted_price = model.predict(input_data)[0]
     actual_price = float(df['Prix'].iloc[-1])  # Actual price from the last line of 'prix.csv'
     difference = actual_price - predicted_price
-    accuracy = (1 - abs((actual_price - predicted_price) / actual_price)) * 100
+    accuracy = (1 - abs((actual_price - predicted_price) / actual_price)) * 100"""
 
+    y_pred = regressor.predict(X_test)
+    df=pd.DataFrame({'Actual':y_test, 'Predicted':y_pred})
+    df
+    print(df) 
+    
+    
+    from sklearn import metrics
+    print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred))
+    print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
+    print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
+    
+    # Calculate the absolute errors
+    errors = abs(y_pred - y_test)
+    # Print out the mean absolute error (mae)
+    print('Mean Absolute Error:', round(np.mean(errors), 2), 'degrees.')
+
+    # Calculate mean absolute percentage error (MAPE)
+    mape = 100 * (errors / y_test)
+    # Calculate and display accuracy
+    accuracy = 100 - np.mean(mape)
+    print('Accuracy:', round(accuracy, 2), '%.')
+    
+    
+    
     current_date = datetime.now()
     prediction_date = current_date.strftime("%B")
-
     
-    return render_template("public/phosphatesRF.html", predicted_price=predicted_price, actual_price=actual_price, difference=difference, accuracy=accuracy, prediction_date=prediction_date)
+    #return render_template("public/phosphatesRF.html", predicted_price=predicted_price, actual_price=actual_price, difference=difference, accuracy=accuracy, prediction_date=prediction_date)
 
 @app.route("/nextmonth")
 def nextmonth():

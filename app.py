@@ -28,7 +28,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import LabelEncoder
 
-
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn import metrics
 
 app=Flask(__name__)
 app.config['SECRET_KEY']='293b8cad24d6f3600ee5a2d67dc1c3efc48f19d0f84b5c2c229e997409a06d20'
@@ -88,11 +90,11 @@ def inscrire():
 
 
 # Collect and clean the data
-df = pd.read_csv("prix.csv")
+"""df = pd.read_csv("prix.csv")
 numeric_columns = df.columns.drop('Mois')
 df[numeric_columns] = df[numeric_columns].fillna(df[numeric_columns].mean())
 
-df = pd.DataFrame(df, columns=['Mois', 'Prix', 'Variation'])
+df = pd.DataFrame(df, columns=['Mois', 'Prix', 'Variation'])"""
 
 
 """from sklearn.preprocessing import OneHotEncoder
@@ -104,7 +106,7 @@ month_encoded_df = pd.DataFrame(month_encoded, columns=encoder.categories_[0])
 df = pd.concat([df.drop(columns=['Mois']), month_encoded_df], axis=1)"""
 
 
-
+"""
 df['Variation'] = df['Variation'].str.replace('-', '')  # Remove the hyphen
 df['Variation'] = df['Variation'].str.replace(',', '.')  # Replace commas with decimal points
 df['Variation'] = df['Variation'].str.replace(' %', '')  # Remove percentage signs
@@ -122,13 +124,30 @@ df.dtypes
 df.describe()
 
 df.dtypes
-"""for x in df:
+for x in df:
     if df[x].dtypes == "int64":
         df[x] = df[x].astype(float)
         print (df[x].dtypes)"""
 
 
 
+# Read the CSV file
+df = pd.read_csv("prix.csv")
+
+# Clean the data and convert columns to the appropriate data types
+
+# Replace commas with decimal points in the 'Prix' column
+df['Prix'] = df['Prix'].str.replace(',', '.').astype(float)
+
+# Remove unnecessary characters and convert 'Variation' column to numeric format
+df['Variation'] = df['Variation'].str.replace('-', '').str.replace(',', '.').str.replace('%', '').astype(float)
+
+window_size = 3  # Adjust the window size as needed
+
+df['Rolling_Average'] = df['Variation'].rolling(window=window_size).mean()
+
+# Drop missing values
+df = df.dropna()
 
 @app.route("/prediction",methods=['POST'])
 def prediction():
@@ -142,8 +161,39 @@ def phosphatesRF():
     # Create and train the model
     # Train the model
     #df = df.select_dtypes()
+    X = df[['Variation', 'Rolling_Average']]
+    y = df['Prix']
+
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=0)
+
+    # Train a random forest regressor model
+    regressor = RandomForestRegressor(n_estimators=1000, random_state=42)
+    regressor.fit(X_train, y_train)
     
-    df=df.fillna(df.mean())
+    # Make predictions on the test set
+    y_pred = regressor.predict(X_test)
+
+    # Evaluate the model
+    print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred))
+    print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
+    print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
+    
+    
+    # Optional: Predict the price for June 2023 using the trained model
+    variation_2023 = df['Variation'].iloc[-1]  # Variation value of the last line
+    input_data = pd.DataFrame({'Variation': [variation_2023]})
+    predicted_price = regressor.predict(input_data)[0]
+    actual_price = df['Prix'].iloc[-1]
+    difference = actual_price - predicted_price
+    accuracy = (1 - abs(difference / actual_price)) * 100
+
+    print('Predicted Price for June 2023:', predicted_price)
+    print('Actual Price for June 2023:', actual_price)
+    print('Difference:', difference)
+    print('Accuracy:', accuracy)
+    
+    """df=df.fillna(df.mean())
     X = df[['Variation']]  # Select the 'Variation' column as input feature
     y = df['Prix']  # Select the 'Prix' column as the target variable
     from sklearn.model_selection import train_test_split
@@ -151,7 +201,7 @@ def phosphatesRF():
     
     from sklearn.ensemble import RandomForestRegressor
     regressor = RandomForestRegressor(n_estimators = 1000, random_state = 42)
-    regressor.fit(X_train, y_train)
+    regressor.fit(X_train, y_train)"""
     
     
     
@@ -168,7 +218,7 @@ def phosphatesRF():
     difference = actual_price - predicted_price
     accuracy = (1 - abs((actual_price - predicted_price) / actual_price)) * 100"""
 
-    y_pred = regressor.predict(X_test)
+    """y_pred = regressor.predict(X_test)
     df=pd.DataFrame({'Actual':y_test, 'Predicted':y_pred})
     print(y_test,y_pred)
     
@@ -187,14 +237,14 @@ def phosphatesRF():
     mape = 100 * (errors / y_test)
     # Calculate and display accuracy
     accuracy = 100 - np.mean(mape)
-    print('Accuracy:', round(accuracy, 2), '%.')
+    print('Accuracy:', round(accuracy, 2), '%.')"""
     
     
     
     current_date = datetime.now()
     prediction_date = current_date.strftime("%B")
     
-    #return render_template("public/phosphatesRF.html", predicted_price=predicted_price, actual_price=actual_price, difference=difference, accuracy=accuracy, prediction_date=prediction_date)
+    return render_template("public/phosphatesRF.html", predicted_price=predicted_price, actual_price=actual_price, difference=difference, accuracy=accuracy, prediction_date=prediction_date)
 
 @app.route("/nextmonth")
 def nextmonth():

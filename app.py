@@ -150,7 +150,9 @@ def phosphatesRF():
     regressor = RandomForestRegressor(n_estimators = 1000, random_state = 42)
     regressor.fit(X_train, y_train)
     
-    """model = RandomForestRegressor()
+    
+    
+    """model = RandomForestRegressor() n,k
     model.fit(X, y)  # Train the model
 
     # Prepare input data for prediction
@@ -165,8 +167,7 @@ def phosphatesRF():
 
     y_pred = regressor.predict(X_test)
     df=pd.DataFrame({'Actual':y_test, 'Predicted':y_pred})
-    df
-    print(df) 
+    print(y_test,y_pred)
     
     
     from sklearn import metrics

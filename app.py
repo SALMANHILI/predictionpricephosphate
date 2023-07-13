@@ -89,6 +89,9 @@ def inscrire():
 
 # Collect and clean the data
 df = pd.read_csv("prix.csv")
+numeric_columns = df.columns.drop('Mois')
+df[numeric_columns] = df[numeric_columns].fillna(df[numeric_columns].mean())
+
 df = pd.DataFrame(df, columns=['Mois', 'Prix', 'Variation'])
 
 
@@ -114,7 +117,7 @@ df['Mois'] = df['Mois'].str.replace('.', '')  # Remove percentage signs
 
 
 df = df.dropna()
-df.head(20)
+df.head(363)
 df.dtypes
 df.describe()
 

@@ -181,9 +181,12 @@ def phosphatesRF():
     
     
     # Optional: Predict the price for June 2023 using the trained model
+    #variation_2023 = df['Variation'].iloc[-1]  # Variation value of the last line
+    #input_data = pd.DataFrame({'Variation': [variation_2023]})
     variation_2023 = df['Variation'].iloc[-1]  # Variation value of the last line
-    input_data = pd.DataFrame({'Variation': [variation_2023]})
-    predicted_price = regressor.predict(input_data)[0]
+    rolling_average_2023 = df['Rolling_Average'].iloc[-1]  # Rolling average of the last line
+    input_data = pd.DataFrame({'Variation': [variation_2023], 'Rolling_Average': [rolling_average_2023]})
+    predicted_price = regressor.predict(input_data)[0]   
     actual_price = df['Prix'].iloc[-1]
     difference = actual_price - predicted_price
     accuracy = (1 - abs(difference / actual_price)) * 100

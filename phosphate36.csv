@@ -1,4 +1,4 @@
-Mois,Phosphate,Diesel,Phosphate_ROC,Diesel_ROC,Phosphate/Diesel_Price_Ratio
+Mois,Phosphate Price (Dollars américains par tonne métrique),Diesel Price (Dollars US par gallon),Phosphate ROC,Diesel ROC,Phosphate/Diesel Price Ratio
 juin 2006,"44,00","2,09",-,-,"210,426"
 juil. 2006,"44,00","2,22","0,00 %","6,03 %","198,466"
 août 2006,"44,00","2,25","0,00 %","1,35 %","195,817"
@@ -202,4 +202,4 @@ janv. 2023,"300,00","3,27","0,00 %","4,81 %","918,274"
 févr. 2023,"322,50","2,83","7,50 %","-13,31 %","1,138,771"
 mars 2023,"345,00","2,75","6,98 %","-3,00 %","1,255,916"
 avr. 2023,"345,00","2,59","0,00 %","-5,61 %","1,330,505"
-mai 2023,"345,00","2,35","0,00 %","-9,53 %","1,470,588"
+mai 2023,"345,00","2,35","0,00 %","-9,53 %","147,0588"

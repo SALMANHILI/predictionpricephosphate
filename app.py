@@ -475,6 +475,7 @@ rf_regressor_score = rf_regressor.score(x_test, y_test)
 rf_pred = rf_regressor.predict(x_test)
 expl_rf = explained_variance_score(rf_pred, y_test)
 
+
 #%%
 # Predict the price for a specific month
 new_data = pd.DataFrame({

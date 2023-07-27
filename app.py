@@ -340,6 +340,7 @@ expl_rf = explained_variance_score(rf_pred, y_test)
 
 
 #%%
+
 # Predict the price for a specific month
 new_data = pd.DataFrame({
     'Diesel Price (Dollars US par gallon)': [2.09],  # Replace with the desired value

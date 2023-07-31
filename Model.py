@@ -73,9 +73,12 @@ df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].asty
 # X (independent variables) and y (target variable)
 X = df[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
 y = df['Phosphate Price (Dollars américains par tonne métrique)']
+
+
+
 # Perform one-hot encoding on the "Mois" column
 X = pd.get_dummies(X, columns=["Mois"])
-
+"""
 # Initialize the StandardScaler
 scaler = StandardScaler()
 
@@ -107,9 +110,9 @@ expl_rf = explained_variance_score(rf_pred, y_test)
 print("Multiple Linear Regression Model Score:", round(mlr_score * 100, 2))
 print("Decision Tree Regression Model Score:", round(tr_regressor_score * 100, 2))
 print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))
-
+"""
 # %%
-# Assuming that the 'June' data is available in the DataFrame 'df', you can filter it like this:
+"""# Assuming that the 'June' data is available in the DataFrame 'df', you can filter it like this:
 june_data = df[df['Mois'] == 'June']
 
 # Extract the independent variables for the June data
@@ -158,10 +161,10 @@ pred_rf_june = rf_regressor.predict(X_june_processed)
 print("Predicted Prices for Phosphates in June:")
 print("Multiple Linear Regression Model:", pred_mlr_june[0])
 print("Decision Tree Regression Model:", pred_tr_june[0])
-print("Random Forest Regression Model:", pred_rf_june[0])
+print("Random Forest Regression Model:", pred_rf_june[0])"""
 
 #%%
-
+"""
 from sklearn.metrics import explained_variance_score
 
 # Predict using the trained models
@@ -194,9 +197,9 @@ print("Accuracy for Multiple Linear Regression Model:", round(accuracy_mlr * 100
 print("Accuracy for Decision Tree Regression Model:", round(accuracy_tr * 100, 2))
 print("Accuracy for Random Forest Regression Model:", round(accuracy_rf * 100, 2))
 
+"""
 
-
-# %%
+#%%
 import pandas as pd
 import numpy as np
 from datetime import datetime
@@ -247,7 +250,6 @@ print("Multiple Linear Regression Model:", pred_mlr_june[0])
 print("Decision Tree Regression Model:", pred_tr_june[0])
 print("Random Forest Regression Model:", pred_rf_june[0])
 
-#%%
 accuracy_mlr = (1 - abs((pred_mlr_june[0]-actual_prices) / actual_prices)) * 100
 
 accuracy_tr = (1 - abs((pred_tr_june[0]-actual_prices) / actual_prices)) * 100
@@ -281,7 +283,6 @@ input_data = {
     'Diesel Price (Dollars US per gallon)': 2.5,
     'Phosphate / Diesel Price Ratio': 141.6530,
 }
-print(input_data)
 
 # Assuming you have already defined and preprocessed the 'x_train' and 'y_train' variables
 
@@ -317,55 +318,8 @@ print("Decision Tree Regression Model:", pred_tr_june[0])
 print("Random Forest Regression Model:", pred_rf_june[0])
 
 
-#AUGUST PREDICTION
-"""july_predicted_mlr =  pred_mlr_june[0]
-july_predicted_tr = pred_tr_june[0]
-july_predicted_rf = pred_rf_june[0]
-
-
-# Create a new DataFrame to store the predicted prices for July and set the index to match the original DataFrame 'df'
-df_july_predicted = pd.DataFrame(index=df.index)
-df_july_predicted['Predicted Prices July (MLR)'] = july_predicted_mlr
-df_july_predicted['Predicted Prices July (Decision Tree)'] = july_predicted_tr
-df_july_predicted['Predicted Prices July (Random Forest)'] = july_predicted_rf
-
-
-# Concatenate the predicted prices for July with the original DataFrame 'df'
-df_with_july_predicted = pd.concat([df, df_july_predicted], axis=1)
-
-# Retrain the models on the entire dataset (including July)
-X_august = df_with_july_predicted[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-X_august = pd.get_dummies(X_august, columns=["Mois"])  # Perform one-hot encoding
-
-# Initialize the StandardScaler
-scaler_august = StandardScaler()
-
-# Scale the data
-X_scaled_august = scaler_august.fit_transform(X_august)
-
-# Retrain the models on the entire dataset (including July)
-mlr.fit(X_scaled_august, y)
-tr_regressor.fit(X_scaled_august, y)
-rf_regressor.fit(X_scaled_august, y)
-
-# Predict the last line's phosphate price for each model
-last_august_data = X.iloc[203:].copy()  # Extract the last line's data for June
-last_august_data_scaled = scaler.transform(last_august_data)  # Scale the last line's data
-
-pred_mlr_august = mlr.predict(last_august_data_scaled)
-pred_tr_august = tr_regressor.predict(last_august_data_scaled)
-pred_rf_august = rf_regressor.predict(last_august_data_scaled)
-
-# Print the predicted prices for phosphates in August for each model
-print("Predicted Prices for Phosphates in August:")
-print("Multiple Linear Regression Model:", pred_mlr_august[0])
-print("Decision Tree Regression Model:", pred_tr_august[0])
-print("Random Forest Regression Model:", pred_rf_august[0])"""
-
-
-#%%# 
 #%%
-#%%
+"""
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -474,7 +428,7 @@ expl_rf = explained_variance_score(rf_pred, y_test)
 # Print the predicted prices for phosphates in June for each model
 print("Multiple Linear Regression Model Score:", round(mlr_score * 100, 2))
 print("Decision Tree Regression Model Score:", round(tr_regressor_score * 100, 2))
-print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))
+print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))"""
 
 #%%
 # Step 1: Prepare Data for June 2022 and Make Predictions

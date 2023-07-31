@@ -567,3 +567,43 @@ for month in months_to_predict:
             print(f"Data for {month} is not available. Skipping predictions for this month.")
     else:
         print(f"Column '{column_name}' is missing in the DataFrame. Skipping predictions for the month of {month}.")
+        
+        
+#%%
+#PLOT
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# Step 1: Read the "results.csv" file
+data = pd.read_csv('RESULTS.csv')
+
+# Step 2: Create a line plot
+months = ['Jun-22', 'Jul-22', 'Aug-22', 'Sep-22', 'Oct-22', 'Nov-22', 'Dec-22', 'Jan-23', 'Feb-23', 'Mar-23', 'Apr-23', 'May-23', 'Jun-23']
+predicted_mlr = data['Predicted_MLR']
+predicted_tr = data['Predicted_TR']
+predicted_rf = data['Predicted_RF']
+actual_price = data['Actual_Price']
+
+plt.figure(figsize=(15, 11))
+
+# Plot predicted data
+plt.plot(months, predicted_mlr, label='Predicted MLR', marker='o')
+plt.plot(months, predicted_tr, label='Predicted TR', marker='o')
+plt.plot(months, predicted_rf, label='Predicted RF', marker='o')
+
+# Plot actual data
+plt.plot(months, actual_price, label='Actual Price', marker='o')
+
+# Step 3: Label the axes and add a legend
+plt.xlabel('Month')
+plt.ylabel('Price')
+plt.title('Comparison of Predicted and Actual Prices for Phosphate')
+plt.legend()
+plt.xticks(rotation=45)
+
+# Show the plot
+plt.grid()
+plt.tight_layout()
+plt.show()
+
+# %%

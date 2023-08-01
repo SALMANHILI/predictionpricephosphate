@@ -43,6 +43,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import explained_variance_score
 from sklearn.preprocessing import StandardScaler
 import re
+from datetime import datetime, timedelta
 
 import pandas as pd
 import numpy as np
@@ -203,11 +204,14 @@ rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
 rf_regressor.fit(X_scaled, y)
 
 
-@app.route("/predthismonth",methods=['POST'])
-def prediction():
+@app.route("/predprevmonth",methods=['POST'])
+def predprevmonth():
     #JUNE 
 
+    current_date = datetime.now()
+    prediction_date = (current_date - timedelta(days=60)).strftime("%B")  # Get the next month
 
+    
     # Predict the last line's phosphate price for each model
     last_june_data = X.iloc[-1:].copy()  # Extract the last line's data for June
     last_june_data_scaled = scaler.transform(last_june_data)  # Scale the last line's data
@@ -216,29 +220,16 @@ def prediction():
     pred_tr_june = tr_regressor.predict(last_june_data_scaled)
     pred_rf_june = rf_regressor.predict(last_june_data_scaled)
 
-    # Print the predicted prices for phosphates in June for each model
-    print("Predicted Prices for Phosphates in June:")
-    print("Multiple Linear Regression Model:", pred_mlr_june[0])
-    print("Decision Tree Regression Model:", pred_tr_june[0])
-    print("Random Forest Regression Model:", pred_rf_june[0])
-
     accuracy_mlr = (1 - abs((pred_mlr_june[0]-actual_prices) / actual_prices)) * 100
 
     accuracy_tr = (1 - abs((pred_tr_june[0]-actual_prices) / actual_prices)) * 100
 
     accuracy_rf = (1 - abs((pred_rf_june[0]-actual_prices) / actual_prices)) * 100
-    # Print the actual phosphate price for the last month
-    print("Actual Phosphate Price for the Last Month:", actual_prices)
-
-    # Print the accuracy for each model
-    print("Accuracy for Multiple Linear Regression Model:", accuracy_mlr)
-    print("Accuracy for Decision Tree Regression Model:", accuracy_tr)
-    print("Accuracy for Random Forest Regression Model:", accuracy_rf)
-    return render_template("public/predthismonth.html")
+    return render_template("public/prevmonth.html", prediction_date=prediction_date,actual_prices=actual_prices, accuracy_mlr=accuracy_mlr, accuracy_tr=accuracy_tr, accuracy_rf=accuracy_rf)
 
 
 @app.route("/predpastyear",methods=['POST'])
-def prediction():
+def predpastyear():
     
     # Step 1: Prepare Data for June 2022 and Make Predictions
     # Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
@@ -309,79 +300,69 @@ def prediction():
                 predicted_prices_tr.append(pred_tr_month[0])
                 predicted_prices_rf.append(pred_rf_month[0])
 
-                # Print the predicted prices for phosphates for each model
-                print("Predicted Prices for Phosphates in", month, ":")
-                print("Multiple Linear Regression Model:", pred_mlr_month[0])
-                print("Decision Tree Regression Model:", pred_tr_month[0])
-                print("Random Forest Regression Model:", pred_rf_month[0])
-
                 # Calculate the accuracy of the predictions for each model
                 actual_price = current_month_data['Phosphate Price (Dollars américains par tonne métrique)'].values[0]
                 accuracy_mlr = 100 * (1 - abs((pred_mlr_month[0] - actual_price) / actual_price))
                 accuracy_tr = 100 * (1 - abs((pred_tr_month[0] - actual_price) / actual_price))
                 accuracy_rf = 100 * (1 - abs((pred_rf_month[0] - actual_price) / actual_price))
 
-                print("Actual Phosphate Price for the Last Month:", actual_price)
-                print("Accuracy for Multiple Linear Regression Model:", accuracy_mlr)
-                print("Accuracy for Decision Tree Regression Model:", accuracy_tr)
-                print("Accuracy for Random Forest Regression Model:", accuracy_rf)
                 print("------------------------------------------------------")
             else:
-                print(f"Data for {month} is not available. Skipping predictions for this month.")
+                print("------------------------------------------------------")
         else:
-            print(f"Column '{column_name}' is missing in the DataFrame. Skipping predictions for the month of {month}.")
+                print("------------------------------------------------------")
             
-    
-        return render_template("public/predjune.html")
+        
+        # Read the CSV file into a DataFrame
+        df = pd.read_csv("RESULTS.csv")
+
+        # Create a new DataFrame containing only the 'Mois' and 'Actual_Price' columns
+        past_year = df.copy()
+        return render_template("public/predjune.html", actual_price=actual_price, accuracy_mlr=accuracy_mlr, accuracy_tr=accuracy_tr, accuracy_rf=accuracy_rf, past_year=past_year)
 
 
-    @app.route("/prednextmonth",methods=['POST'])
-    def prediction():
-        #JULY 
+@app.route("/prednextmonth",methods=['POST'])
+def prednextmonth():
+    #JULY 
+    last_month= X.iloc[-1:].copy() 
 
-        # Predict the variations and rolling averages for June 2023
-        historical_data = df[df['Mois'] <='juin 2023']  # Filter the data for all rows before June 2023
+    # Predict the variations and rolling averages for June 2023
+    historical_data = df[df['Mois'] <='juin 2023']  # Filter the data for all rows before June 2023
 
 
-        # Create an input DataFrame for June 2023 data using historical data
-        input_data = historical_data[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-        input_data = {
-            'Diesel Price (Dollars US per gallon)': 2.5,
-            'Phosphate / Diesel Price Ratio': 141.6530,
-        }
+    # Create an input DataFrame for June 2023 data using historical data
+    input_data = historical_data[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
+    input_data = {
+        'Diesel Price (Dollars US per gallon)': 2.5,
+        'Phosphate / Diesel Price Ratio': 141.6530,
+    }
 
-        # Assuming you have already defined and preprocessed the 'x_train' and 'y_train' variables
+    # Assuming you have already defined and preprocessed the 'x_train' and 'y_train' variables
 
-        # Initialize the StandardScaler
-        scaler = StandardScaler()
+    # Initialize the StandardScaler
+    scaler = StandardScaler()
 
-        # Scale the data
-        X_scaled = scaler.fit_transform(X)
+    # Scale the data
+    X_scaled = scaler.fit_transform(X)
 
-        # Train the models on the entire dataset
-        mlr = LinearRegression()
-        mlr.fit(X_scaled, y)
+    # Train the models on the entire dataset
+    mlr = LinearRegression()
+    mlr.fit(X_scaled, y)
 
-        tr_regressor = DecisionTreeRegressor(random_state=0)
-        tr_regressor.fit(X_scaled, y)
+    tr_regressor = DecisionTreeRegressor(random_state=0)
+    tr_regressor.fit(X_scaled, y)
 
-        rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
+    rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
 
-        rf_regressor.fit(X_scaled, y)
+    rf_regressor.fit(X_scaled, y)
 
-        # Predict the last line's phosphate price for each model
-        last_june_data = X.iloc[203:].copy()  # Extract the last line's data for June
-        last_june_data_scaled = scaler.transform(last_june_data)  # Scale the last line's data
+    # Predict the last line's phosphate price for each model
+    last_june_data = X.iloc[203:].copy()  # Extract the last line's data for June
+    last_june_data_scaled = scaler.transform(last_june_data)  # Scale the last line's data
 
-        pred_mlr_june = mlr.predict(last_june_data_scaled)
-        pred_tr_june = tr_regressor.predict(last_june_data_scaled)
-        pred_rf_june = rf_regressor.predict(last_june_data_scaled)
-
-        # Print the predicted prices for phosphates in June for each model
-        print("Predicted Prices for Phosphates in July:")
-        print("Multiple Linear Regression Model:", pred_mlr_june[0])
-        print("Decision Tree Regression Model:", pred_tr_june[0])
-        print("Random Forest Regression Model:", pred_rf_june[0])
+    pred_mlr_june = mlr.predict(last_june_data_scaled)
+    pred_tr_june = tr_regressor.predict(last_june_data_scaled)
+    pred_rf_june = rf_regressor.predict(last_june_data_scaled)
 
     return render_template("public/predjune.html")
 
@@ -397,7 +378,7 @@ def phosphatesRF():
     prediction_date = (current_date + timedelta(days=30)).strftime("%B")  # Get the next month
 
     
-    return render_template("public/nextmonth.html", next_month=next_month, variation_nextmonth=variation_nextmonth, prediction_date=prediction_date)
+    return render_template("public/nextmonth.html")
 
 
 if __name__ == '__main__':

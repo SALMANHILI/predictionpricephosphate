@@ -435,7 +435,7 @@ print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2
 # Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
 
 # Scale the data for June 2022 using the previously defined scaler (scaler_june)
-df_june_2022= X.iloc[-13:].copy() 
+df_june_2022= X.iloc[-12:].copy() 
 data_june_2022_scaled = scaler.transform(df_june_2022)
 
 # Make predictions for June 2022 using the trained models (mlr, tr_regressor, rf_regressor)
@@ -561,3 +561,131 @@ plt.tight_layout()
 plt.show()
 
 # %%
+# Step 1: Prepare Data for June 2022 and Make Predictions
+# Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
+df_june_2022 = X.copy() 
+scaler = StandardScaler()
+scaler.fit(X)
+
+# Now the scaler is fitted, and you can use the transform method
+data_june_2022_scaled = scaler.transform(df_june_2022)
+# Make predictions for June 2022 using the trained models (mlr, tr_regressor, rf_regressor)
+pred_mlr_june_2022 = mlr.predict(data_june_2022_scaled)
+pred_tr_june_2022 = tr_regressor.predict(data_june_2022_scaled)
+pred_rf_june_2022 = rf_regressor.predict(data_june_2022_scaled)
+
+# Step 2: Create "df_with_june_predicted" DataFrame
+# Create a new DataFrame to store the predicted values for each month
+df_nextyear_predicted = df_june_2022.copy()
+
+# Define the list of months in the order you want to predict (from July 2022 to June 2023)
+months_to_predict = ['July 2023', 'August 2023', 'September 2023', 'October 2023', 'November 2023', 'December 2023',
+                     'January 2024', 'February 2024', 'March 2024', 'April 2024', 'May 2024', 'June 2024']
+
+# Find the rows where any of the columns have 'True' as the value
+true_row_index = df_nextyear_predicted.any(axis=1)
+
+# Extract the month names for the rows with True values
+df_nextyear_predicted['Months'] = [' '.join(month for month in months_to_predict if row[f'Mois_{month.split()[0]}']) for _, row in df_nextyear_predicted.iterrows()]
+
+# Filter the DataFrame to keep only the rows with True values
+df_nextyear_predicted = df_nextyear_predicted[true_row_index]
+
+# Add the predicted prices for June 2022 to the DataFrame
+df_nextyear_predicted['Predicted Price MLR'] = pred_mlr_june_2022[true_row_index]
+df_nextyear_predicted['Predicted Price TR'] = pred_tr_june_2022[true_row_index]
+df_nextyear_predicted['Predicted Price RF'] = pred_rf_june_2022[true_row_index]
+# Step 3: Continue Predictions for Subsequent Months
+# Now you can proceed with the loop to make predictions for the remaining months
+# Initialize empty lists to store predicted prices for each model
+predicted_prices_mlr = []
+predicted_prices_tr = []
+predicted_prices_rf = []
+
+# Initialize the LabelEncoder object
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+
+label_encoder = LabelEncoder()
+# Loop through each month and make predictions
+for month in months_to_predict:
+    print("Current Month:", month)
+    print("df_nextyear_predicted:")
+    print(df_nextyear_predicted)
+
+   # Prepare input data for the current month
+    column_name = 'Mois_' + month.capitalize()
+    if column_name in df_nextyear_predicted.columns:
+
+        # Replace True/False values with the corresponding month names
+        df_nextyear_predicted[column_name] = df_nextyear_predicted[column_name].replace({True: month, False: ''})
+
+        current_month_data = df_nextyear_predicted[df_nextyear_predicted[column_name] == month]
+
+        # Check if the DataFrame for the current month is empty
+        if not current_month_data.empty:
+                   df_nextyear_predicted[column_name] = df_nextyear_predicted[column_name].replace({True: month, False: ''})
+
+        current_month_data = df_nextyear_predicted[df_nextyear_predicted[column_name] == month]
+
+        # Check if the DataFrame for the current month is empty
+        if not current_month_data.empty:
+            # Encode the "Month" column using LabelEncoder
+            current_month_data['Month'] = label_encoder.transform([month_name_to_value[month]] * len(current_month_data))
+
+            # Add a new "Month" column to the DataFrame and set it to the month's name
+            df_nextyear_predicted['Month'] = month
+
+            # Assuming 'numeric_columns' is a list of numerical column names
+            numeric_columns = ['Phosphate Price (Dollars américains par tonne métrique)', 'Diesel Price (Dollars US par gallon)', 'Phosphate ROC', 'Diesel ROC', 'Phosphate / Diesel Price Ratio']
+
+            # Scale numeric data for the current month
+            current_month_data_scaled = current_month_data.copy()
+            current_month_data_scaled[numeric_columns] = scaler.transform(current_month_data[numeric_columns])
+            # Assuming 'numeric_columns' is a list of numerical column names
+            numeric_columns = ['Phosphate Price (Dollars américains par tonne métrique)', 'Diesel Price (Dollars US par gallon)', 'Phosphate ROC', 'Diesel ROC', 'Phosphate / Diesel Price Ratio']
+
+            # Scale numeric data for the current month
+            current_month_data_scaled = current_month_data.copy()
+            current_month_data_scaled[numeric_columns] = scaler.transform(current_month_data[numeric_columns])
+
+            # Predict phosphate prices for the current month using the trained models
+            pred_mlr_month = mlr.predict(current_month_data_scaled)
+            pred_tr_month = tr_regressor.predict(current_month_data_scaled)
+            pred_rf_month = rf_regressor.predict(current_month_data_scaled)
+
+            # Append the predicted prices to the respective lists
+            predicted_prices_mlr.append(pred_mlr_month[0])
+            predicted_prices_tr.append(pred_tr_month[0])
+            predicted_prices_rf.append(pred_rf_month[0])
+
+            # Print the predicted prices for phosphates for each model
+            print("Predicted Prices for Phosphates in", month, ":")
+            print("Multiple Linear Regression Model:", pred_mlr_month[0])
+            print("Decision Tree Regression Model:", pred_tr_month[0])
+            print("Random Forest Regression Model:", pred_rf_month[0])
+
+            # Calculate the accuracy of the predictions for each model
+            actual_price = current_month_data['Phosphate Price (Dollars américains par tonne métrique)'].values[0]
+            accuracy_mlr = 100 * (1 - abs((pred_mlr_month[0] - actual_price) / actual_price))
+            accuracy_tr = 100 * (1 - abs((pred_tr_month[0] - actual_price) / actual_price))
+            accuracy_rf = 100 * (1 - abs((pred_rf_month[0] - actual_price) / actual_price))
+
+            print("Actual Phosphate Price for the Last Month:", actual_price)
+            print("Accuracy for Multiple Linear Regression Model:", accuracy_mlr)
+            print("Accuracy for Decision Tree Regression Model:", accuracy_tr)
+            print("Accuracy for Random Forest Regression Model:", accuracy_rf)
+            print("------------------------------------------------------")
+        else:
+            print(f"Data for {month} is not available. Skipping predictions for this month.")
+    else:
+        print(f"Column '{column_name}' is missing in the DataFrame. Skipping predictions for the month of {month}.")
+#%%
+
+# Print only the specified columns from df_nextyear_predicted
+selected_columns = ['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio',
+                    'Months','Predicted Price MLR', 'Predicted Price TR', 'Predicted Price RF']
+
+selected_data = df_nextyear_predicted.loc[:, selected_columns]
+
+# Save the selected columns to a CSV file
+selected_data.to_csv('output_nextyear.csv', index=False)

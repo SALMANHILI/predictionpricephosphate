@@ -78,126 +78,10 @@ y = df['Phosphate Price (Dollars américains par tonne métrique)']
 
 # Perform one-hot encoding on the "Mois" column
 X = pd.get_dummies(X, columns=["Mois"])
-"""
-# Initialize the StandardScaler
-scaler = StandardScaler()
-
-# Scale the data
-x_scaled = scaler.fit_transform(X)
-
-# Split the data into training and test sets
-x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, test_size=0.26, random_state=0)
-# Train the models
-mlr = LinearRegression()
-mlr.fit(x_train, y_train)
-mlr_score = mlr.score(x_test, y_test)
-pred_mlr = mlr.predict(x_test)
-expl_mlr = explained_variance_score(pred_mlr, y_test)
-
-tr_regressor = DecisionTreeRegressor(random_state=0)
-tr_regressor.fit(x_train, y_train)
-tr_regressor_score = tr_regressor.score(x_test, y_test)
-pred_tr = tr_regressor.predict(x_test)
-expl_tr = explained_variance_score(pred_tr, y_test)
-
-rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
-rf_regressor.fit(x_train, y_train)
-rf_regressor_score = rf_regressor.score(x_test, y_test)
-rf_pred = rf_regressor.predict(x_test)
-expl_rf = explained_variance_score(rf_pred, y_test)
-# Print the predicted prices for phosphates in June for each model
-# Print the predicted prices for phosphates in June for each model
-print("Multiple Linear Regression Model Score:", round(mlr_score * 100, 2))
-print("Decision Tree Regression Model Score:", round(tr_regressor_score * 100, 2))
-print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))
-"""
-# %%
-"""# Assuming that the 'June' data is available in the DataFrame 'df', you can filter it like this:
-june_data = df[df['Mois'] == 'June']
-
-# Extract the independent variables for the June data
-X_june = june_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-# Convert them to strings first before performing replacement
-X_june['Diesel Price (Dollars US par gallon)'] = X_june['Diesel Price (Dollars US par gallon)'].astype(str)
-X_june['Phosphate / Diesel Price Ratio'] = X_june['Phosphate / Diesel Price Ratio'].astype(str)
-
-# Now perform the replacements
-X_june['Diesel Price (Dollars US par gallon)'] = X_june['Diesel Price (Dollars US par gallon)'].str.replace(',', '.')
-X_june['Phosphate / Diesel Price Ratio'] = X_june['Phosphate / Diesel Price Ratio'].str.replace(',', '.').astype(float)
-
-# Make a copy of 'X_june' to avoid the SettingWithCopyWarning
-X_june_copy = X_june.copy()
-# Convert the necessary columns to strings first before performing replacement
-X_june_copy['Diesel Price (Dollars US par gallon)'] = X_june_copy['Diesel Price (Dollars US par gallon)'].astype(str)
-X_june_copy['Phosphate / Diesel Price Ratio'] = X_june_copy['Phosphate / Diesel Price Ratio'].astype(str)
-
-# Now perform the replacements using .loc accessor
-X_june_copy['Diesel Price (Dollars US par gallon)'] = X_june_copy['Diesel Price (Dollars US par gallon)'].str.replace(',', '.')
-X_june_copy['Phosphate / Diesel Price Ratio'] = X_june_copy['Phosphate / Diesel Price Ratio'].str.replace(',', '.').astype(float)
-
-# Perform one-hot encoding on the "Mois" column for June data
-# Check if 'Mois' column exists in X_june_copy DataFrame
-if 'Mois' in X_june_copy.columns:
-    # Perform one-hot encoding on the 'Mois' column for June data
-    X_june_copy = pd.get_dummies(X_june_copy, columns=["Mois"])
-else:
-    # Handle the case when 'Mois' column is missing or not found
-    # You might want to print a message or take appropriate action based on your requirement.
-    print("Column 'Mois' not found in the DataFrame.")
-
-# Ensure 'X_june_copy' has the same set of features and in the same order as 'X_train'
-X_june_processed = X_june_copy.reindex(columns=X.columns, fill_value=0)
-
-# Print the columns of both 'X_train' and 'X_june_processed' for comparison
-print("Training Data Columns:", X.columns)
-print("X_june_processed Columns:", X_june_processed.columns)
-
-# Predict using the trained models
-pred_mlr_june = mlr.predict(X_june_processed)
-pred_tr_june = tr_regressor.predict(X_june_processed)
-pred_rf_june = rf_regressor.predict(X_june_processed)
-
-# Print the predicted prices for phosphates in June for each model
-print("Predicted Prices for Phosphates in June:")
-print("Multiple Linear Regression Model:", pred_mlr_june[0])
-print("Decision Tree Regression Model:", pred_tr_june[0])
-print("Random Forest Regression Model:", pred_rf_june[0])"""
-
-#%%
-"""
-from sklearn.metrics import explained_variance_score
-
-# Predict using the trained models
-pred_mlr_june = mlr.predict(X_june_processed)
-pred_tr_june = tr_regressor.predict(X_june_processed)
-pred_rf_june = rf_regressor.predict(X_june_processed)
-
-print("Predicted Prices for Phosphates in June:")
-print("Multiple Linear Regression Model:", pred_mlr_june[0])
-print("Decision Tree Regression Model:", pred_tr_june[0])
-print("Random Forest Regression Model:", pred_rf_june[0])
 
 
-# Assuming the actual phosphate prices for June 2023 are available in 'june_data'
-actual_prices = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1]
 
-# Create an array-like object with the same number of elements as predicted prices
-actual_prices_list = [actual_prices] * len(pred_mlr_june)
 
-# Calculate the explained variance score for each model's predictions
-accuracy_mlr = explained_variance_score(pred_mlr_june, actual_prices_list)
-accuracy_tr = explained_variance_score(pred_tr_june, actual_prices_list)
-accuracy_rf = explained_variance_score(actual_prices_list, pred_rf_june)
-
-# Print the actual phosphate price for the last month
-print("Actual Phosphate Price for the Last Month:", actual_prices)
-
-# Print the accuracy for each model
-print("Accuracy for Multiple Linear Regression Model:", round(accuracy_mlr * 100, 2))
-print("Accuracy for Decision Tree Regression Model:", round(accuracy_tr * 100, 2))
-print("Accuracy for Random Forest Regression Model:", round(accuracy_rf * 100, 2))
-
-"""
 
 #%%
 import pandas as pd
@@ -250,18 +134,21 @@ print("Multiple Linear Regression Model:", pred_mlr_june[0])
 print("Decision Tree Regression Model:", pred_tr_june[0])
 print("Random Forest Regression Model:", pred_rf_june[0])
 
-accuracy_mlr = (1 - abs((pred_mlr_june[0]-actual_prices) / actual_prices)) * 100
+# Assuming the actual phosphate prices for June 2023 are available in 'june_data'
+actual_prices = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1]
 
-accuracy_tr = (1 - abs((pred_tr_june[0]-actual_prices) / actual_prices)) * 100
+# Calculate R-squared values
+r2_mlr = mlr.score(X_scaled, y)
+r2_tr = tr_regressor.score(X_scaled, y)
+r2_rf = rf_regressor.score(X_scaled, y)
 
-accuracy_rf = (1 - abs((pred_rf_june[0]-actual_prices) / actual_prices)) * 100
-# Print the actual phosphate price for the last month
-print("Actual Phosphate Price for the Last Month:", actual_prices)
+# Print R-squared values for each model
+print("R-squared for Multiple Linear Regression Model:", r2_mlr)
+print("R-squared for Decision Tree Regression Model:", r2_tr)
+print("R-squared for Random Forest Regression Model:", r2_rf)
 
-# Print the accuracy for each model
-print("Accuracy for Multiple Linear Regression Model:", accuracy_mlr)
-print("Accuracy for Decision Tree Regression Model:", accuracy_tr)
-print("Accuracy for Random Forest Regression Model:", accuracy_rf)
+
+
 #%%
 import pandas as pd
 import numpy as np
@@ -318,119 +205,8 @@ print("Decision Tree Regression Model:", pred_tr_june[0])
 print("Random Forest Regression Model:", pred_rf_june[0])
 
 
-#%%
-"""
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.calibration import LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import explained_variance_score
-from sklearn.preprocessing import StandardScaler
-import re
-# Load the dataset
-df = pd.read_csv("phosphate36.csv", skiprows=1)
 
-# Check the dataset
-print(df.head())
-
-# Modify the column names to match the actual column names in the dataset
-df.columns = ['Mois',
-              'Phosphate Price (Dollars américains par tonne métrique)',
-              'Diesel Price (Dollars US par gallon)',
-              'Phosphate ROC',
-              'Diesel ROC',
-              'Phosphate / Diesel Price Ratio']
-
-# Define the month mapping
-# Define the month mapping
-month_mapping = {
-    'janv': 'January',
-    'févr': 'February',
-    'mars': 'March',
-    'avr': 'April',
-    'mai': 'May',
-    'juin': 'June',
-    'juil.': 'July',
-    'juil': 'July',
-    'août': 'August',
-    'sept.': 'September',
-    'sept': 'September',
-    'oct.': 'October',
-    'oct': 'October',
-    'nov.': 'November',
-    'nov': 'November',
-    'déc.': 'December',
-    'déc': 'December'
-}
-
-# Map the month names
-df['Mois'] = df['Mois'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
-print(df)
-# Convert 'Phosphate Price' column to numeric values
-df['Phosphate Price (Dollars américains par tonne métrique)'] = df['Phosphate Price (Dollars américains par tonne métrique)'].astype(str).str.replace(',', '.').astype(float)
-
-# Convert 'Diesel Price' column to numeric values
-df['Diesel Price (Dollars US par gallon)'] = df['Diesel Price (Dollars US par gallon)'].str.replace(',', '.').astype(float)
-
-# Convert 'Phosphate ROC' column to numeric values
-df['Phosphate ROC'] = df['Phosphate ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
-df['Phosphate ROC'] = df['Phosphate ROC'].str.replace(',', '.')  # Replace commas with dots
-df['Phosphate ROC'] = df['Phosphate ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
-
-# Convert 'Diesel ROC' column to numeric values
-df['Diesel ROC'] = df['Diesel ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
-df['Diesel ROC'] = df['Diesel ROC'].str.replace(',', '.')  # Replace commas with dots
-df['Diesel ROC'] = df['Diesel ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
-
-# Remove both dots and commas from 'Phosphate / Diesel Price Ratio' column
-df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].str.replace('[,.]', '', regex=True)
-
-# Convert 'Phosphate / Diesel Price Ratio' column to numeric values
-df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].astype(float)
-
-# X (independent variables) and y (target variable)
-X = df[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-y = df['Phosphate Price (Dollars américains par tonne métrique)']
-# Perform one-hot encoding on the "Mois" column
-X = pd.get_dummies(X, columns=["Mois"])
-
-# Initialize the StandardScaler
-scaler = StandardScaler()
-
-# Scale the data
-x_scaled = scaler.fit_transform(X)
-
-# Split the data into training and test sets
-x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, test_size=0.26, random_state=0)
-# Train the models
-mlr = LinearRegression()
-mlr.fit(x_train, y_train)
-mlr_score = mlr.score(x_test, y_test)
-pred_mlr = mlr.predict(x_test)
-expl_mlr = explained_variance_score(pred_mlr, y_test)
-
-tr_regressor = DecisionTreeRegressor(random_state=0)
-tr_regressor.fit(x_train, y_train)
-tr_regressor_score = tr_regressor.score(x_test, y_test)
-pred_tr = tr_regressor.predict(x_test)
-expl_tr = explained_variance_score(pred_tr, y_test)
-
-rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
-rf_regressor.fit(x_train, y_train)
-rf_regressor_score = rf_regressor.score(x_test, y_test)
-rf_pred = rf_regressor.predict(x_test)
-expl_rf = explained_variance_score(rf_pred, y_test)
-# Print the predicted prices for phosphates in June for each model
-# Print the predicted prices for phosphates in June for each model
-print("Multiple Linear Regression Model Score:", round(mlr_score * 100, 2))
-print("Decision Tree Regression Model Score:", round(tr_regressor_score * 100, 2))
-print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))"""
-
-#%%
+#%% PAST YEAR 
 # Step 1: Prepare Data for June 2022 and Make Predictions
 # Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
 
@@ -506,21 +282,14 @@ for month in months_to_predict:
             print("Decision Tree Regression Model:", pred_tr_month[0])
             print("Random Forest Regression Model:", pred_rf_month[0])
 
-            # Calculate the accuracy of the predictions for each model
-            actual_price = current_month_data['Phosphate Price (Dollars américains par tonne métrique)'].values[0]
-            accuracy_mlr = 100 * (1 - abs((pred_mlr_month[0] - actual_price) / actual_price))
-            accuracy_tr = 100 * (1 - abs((pred_tr_month[0] - actual_price) / actual_price))
-            accuracy_rf = 100 * (1 - abs((pred_rf_month[0] - actual_price) / actual_price))
-
-            print("Actual Phosphate Price for the Last Month:", actual_price)
-            print("Accuracy for Multiple Linear Regression Model:", accuracy_mlr)
-            print("Accuracy for Decision Tree Regression Model:", accuracy_tr)
-            print("Accuracy for Random Forest Regression Model:", accuracy_rf)
+            
+            
             print("------------------------------------------------------")
         else:
             print(f"Data for {month} is not available. Skipping predictions for this month.")
     else:
         print(f"Column '{column_name}' is missing in the DataFrame. Skipping predictions for the month of {month}.")
+        
         
         
 #%%
@@ -560,7 +329,7 @@ plt.grid()
 plt.tight_layout()
 plt.show()
 
-# %%
+# %% NEXT YEAR 
 # Step 1: Prepare Data for June 2022 and Make Predictions
 # Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
 df_june_2022 = X.copy() 
@@ -680,6 +449,21 @@ for month in months_to_predict:
     else:
         print(f"Column '{column_name}' is missing in the DataFrame. Skipping predictions for the month of {month}.")
 #%%
+# Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
+df_june_2022 = X.copy() 
+scaler = StandardScaler()
+scaler.fit(X)
+
+# Now the scaler is fitted, and you can use the transform method
+data_june_2022_scaled = scaler.transform(df_june_2022)
+# Make predictions for June 2022 using the trained models (mlr, tr_regressor, rf_regressor)
+pred_mlr_june_2022 = mlr.predict(data_june_2022_scaled)
+pred_tr_june_2022 = tr_regressor.predict(data_june_2022_scaled)
+pred_rf_june_2022 = rf_regressor.predict(data_june_2022_scaled)
+
+# Step 2: Create "df_with_june_predicted" DataFrame
+# Create a new DataFrame to store the predicted values for each month
+df_nextyear_predicted = df_june_2022.copy()
 
 # Print only the specified columns from df_nextyear_predicted
 selected_columns = ['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio',
@@ -689,3 +473,222 @@ selected_data = df_nextyear_predicted.loc[:, selected_columns]
 
 # Save the selected columns to a CSV file
 selected_data.to_csv('output_nextyear.csv', index=False)
+
+
+#%%
+
+from sklearn.preprocessing import LabelEncoder
+
+# Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
+df_june_2022 = X.copy()
+
+# List of all month names
+all_months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+
+# Fit the LabelEncoder on the list of all months
+label_encoder = LabelEncoder()
+label_encoder.fit(all_months)
+
+# List of months you want to predict
+months_to_predict = ['June 2023', 'July 2023', 'August 2023', 'September 2023', 'October 2023', 'November 2023', 'December 2023', 'January 2024', 'February 2024', 'March 2024', 'April 2024', 'May 2024']
+
+# Loop through each month and make predictions
+for month in months_to_predict:
+    print("Predicting prices for:", month)
+    
+    # Prepare input data for the current month
+    column_name = 'Mois_' + month.replace(' ', '_')
+    df_june_2022[column_name] = True
+    
+    encoded_month_values = label_encoder.transform([pd.to_datetime(month, format='%B %Y').month] * len(df_june_2022))
+    df_june_2022['Month'] = encoded_month_values
+    
+    current_month_data = df_june_2022.copy()
+    current_month_data_scaled = current_month_data.copy()
+    current_month_data_scaled.loc[:, numeric_columns] = scaler.transform(current_month_data[numeric_columns])
+    
+    # Predict phosphate prices for the current month using the trained models
+    pred_mlr_month = mlr.predict(current_month_data_scaled)
+    pred_tr_month = tr_regressor.predict(current_month_data_scaled)
+    pred_rf_month = rf_regressor.predict(current_month_data_scaled)
+    
+    # Store the predicted prices in the DataFrame
+    current_month_data['Predicted Price MLR'] = pred_mlr_month
+    current_month_data['Predicted Price TR'] = pred_tr_month
+    current_month_data['Predicted Price RF'] = pred_rf_month
+    
+    # Append the current month's data to the final DataFrame
+    df_predicted = df_predicted.append(current_month_data, ignore_index=True)
+    
+    # Reset the added columns for the next iteration
+    df_june_2022[column_name] = False
+
+# Display the final DataFrame with predicted prices
+print(df_predicted)
+
+##%
+import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.preprocessing import StandardScaler
+
+df = pd.read_csv("phosphate36.csv", skiprows=1)
+
+# Check the dataset
+print(df.head())
+
+# Modify the column names to match the actual column names in the dataset
+df.columns = ['Mois',
+              'Phosphate Price (Dollars américains par tonne métrique)',
+              'Diesel Price (Dollars US par gallon)',
+              'Phosphate ROC',
+              'Diesel ROC',
+              'Phosphate / Diesel Price Ratio']
+
+# Define the month mapping
+# Define the month mapping
+month_mapping = {
+    'janv': 'January',
+    'févr': 'February',
+    'mars': 'March',
+    'avr': 'April',
+    'mai': 'May',
+    'juin': 'June',
+    'juil.': 'July',
+    'juil': 'July',
+    'août': 'August',
+    'sept.': 'September',
+    'sept': 'September',
+    'oct.': 'October',
+    'oct': 'October',
+    'nov.': 'November',
+    'nov': 'November',
+    'déc.': 'December',
+    'déc': 'December'
+}
+
+# Map the month names
+df['Mois'] = df['Mois'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
+print(df)
+# Convert 'Phosphate Price' column to numeric values
+df['Phosphate Price (Dollars américains par tonne métrique)'] = df['Phosphate Price (Dollars américains par tonne métrique)'].astype(str).str.replace(',', '.').astype(float)
+
+# Convert 'Diesel Price' column to numeric values
+df['Diesel Price (Dollars US par gallon)'] = df['Diesel Price (Dollars US par gallon)'].str.replace(',', '.').astype(float)
+
+# Convert 'Phosphate ROC' column to numeric values
+df['Phosphate ROC'] = df['Phosphate ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
+df['Phosphate ROC'] = df['Phosphate ROC'].str.replace(',', '.')  # Replace commas with dots
+df['Phosphate ROC'] = df['Phosphate ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
+
+# Convert 'Diesel ROC' column to numeric values
+df['Diesel ROC'] = df['Diesel ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
+df['Diesel ROC'] = df['Diesel ROC'].str.replace(',', '.')  # Replace commas with dots
+df['Diesel ROC'] = df['Diesel ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
+
+# Remove both dots and commas from 'Phosphate / Diesel Price Ratio' column
+df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].str.replace(',', '.')  # Replace commas with dots
+
+
+
+# Filter the data for all rows before June 2023
+historical_data = df[df['Mois'] <= 'juin 2023']
+
+# X (independent variables) and y (target variable)
+X = df[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
+y = df['Phosphate Price (Dollars américains par tonne métrique)']
+
+
+
+# Perform one-hot encoding on the "Mois" column
+X = pd.get_dummies(X, columns=["Mois"])
+
+# Create an input DataFrame for June 2023 data using historical data
+input_data = historical_data[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
+input_data = {
+    'Diesel Price (Dollars US per gallon)': 2.5,
+    'Phosphate / Diesel Price Ratio': 500.5,
+}
+# Initialize the StandardScaler
+scaler = StandardScaler()
+
+# Fit the scaler on historical data
+scaler.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']])
+
+# Define the number of iterations (months to predict)
+num_iterations = 12
+
+# Loop through each iteration to predict prices for the next 12 months
+for i in range(num_iterations):
+    print("Iteration:", i+1)
+    
+    
+    # Create an input DataFrame for June 2023 data using historical data
+    input_data = {
+        'Diesel Price (Dollars US par gallon)': df['Diesel Price (Dollars US par gallon)'].iloc[-1:].values.item(),
+        'Phosphate / Diesel Price Ratio': df['Phosphate / Diesel Price Ratio'].iloc[-1:].values.item(),
+    }
+
+    # Prepare input data for prediction
+    input_df = pd.DataFrame(input_data, index=[0])
+
+    # Make sure the column names match the ones used during training
+    input_df = input_df[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
+
+    # Transform the input data using the trained scaler
+    input_scaled = scaler.transform(input_df)
+
+    
+    # Load pre-trained models
+    # Load pre-trained models
+    mlr = LinearRegression()
+    mlr.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']], historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
+
+    tr_regressor = DecisionTreeRegressor(random_state=0)
+    tr_regressor.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']], historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
+
+    rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
+    rf_regressor.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']], historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
+
+    # Predict the phosphate price for the next month using the trained models
+    pred_mlr_next_month = mlr.predict(input_scaled)
+    pred_tr_next_month = tr_regressor.predict(input_scaled)
+    pred_rf_next_month = rf_regressor.predict(input_scaled)
+
+    # Print the predicted prices for the next month for each model
+    print("Predicted Prices for the Next Month:")
+    print("Multiple Linear Regression Model:", pred_mlr_next_month[0])
+    print("Decision Tree Regression Model:", pred_tr_next_month[0])
+    print("Random Forest Regression Model:", pred_rf_next_month[0])
+    
+    initial_value = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1:].values.item()
+    initial_ratio = df['Phosphate / Diesel Price Ratio'].iloc[-1:].values.item()
+    initial_ratio_f = float(initial_ratio)
+
+    # Store the predicted prices in the dataset
+    new_row = {
+    'Mois': pd.Timestamp.now().replace(month=(i+7) % 12 + 1).strftime('%B %Y'),
+    'Phosphate Price (Dollars américains par tonne métrique)': pred_rf_next_month[0],
+    'Diesel Price (Dollars US par gallon)': 2.43,
+    'Phosphate ROC': ((pred_rf_next_month[0] - initial_value) / initial_value) * 100,
+    'Diesel ROC': 0.00, 
+    'Phosphate / Diesel Price Ratio': pred_rf_next_month[0] / initial_ratio_f
+}
+
+    # Convert the dictionary to a DataFrame
+    new_row_df = pd.DataFrame(new_row, index=[0])
+
+    # Concatenate the new row DataFrame with the existing DataFrame
+    df = pd.concat([df, new_row_df], ignore_index=True)
+
+        
+    
+    
+    
+    print("Predicted prices for", pd.Timestamp.now().replace(month=i+7).strftime('%B %Y'), "added to the dataset.")
+    print("-------------------------------")
+
+# Save the updated DataFrame with predicted prices
+df.to_csv('phosphate36_predicted.csv', index=False)

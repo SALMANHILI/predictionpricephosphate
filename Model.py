@@ -150,28 +150,7 @@ print("R-squared for Random Forest Regression Model:", r2_rf)
 
 
 #%%
-import pandas as pd
-import numpy as np
-from datetime import datetime
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn import metrics
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn import metrics
-
-# Predict the variations and rolling averages for June 2023
-historical_data = df[df['Mois'] <='juin 2023']  # Filter the data for all rows before June 2023
-
-
-# Create an input DataFrame for June 2023 data using historical data
-input_data = historical_data[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-input_data = {
-    'Diesel Price (Dollars US per gallon)': 2.5,
-    'Phosphate / Diesel Price Ratio': 141.6530,
-}
-
-# Assuming you have already defined and preprocessed the 'x_train' and 'y_train' variables
+# Assuming you have already defined and preprocessed the 'X' and 'y' variables
 
 # Initialize the StandardScaler
 scaler = StandardScaler()
@@ -187,22 +166,37 @@ tr_regressor = DecisionTreeRegressor(random_state=0)
 tr_regressor.fit(X_scaled, y)
 
 rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
-
 rf_regressor.fit(X_scaled, y)
 
 # Predict the last line's phosphate price for each model
-last_june_data = X.iloc[203:].copy()  # Extract the last line's data for June
-last_june_data_scaled = scaler.transform(last_june_data)  # Scale the last line's data
+last_july_data = X.iloc[-1:].copy()  # Extract the last line's data for July
+last_july_data_scaled = scaler.transform(last_july_data)  # Scale the last line's data
 
-pred_mlr_june = mlr.predict(last_june_data_scaled)
-pred_tr_june = tr_regressor.predict(last_june_data_scaled)
-pred_rf_june = rf_regressor.predict(last_june_data_scaled)
+pred_mlr_july = mlr.predict(last_july_data_scaled)
+pred_tr_july = tr_regressor.predict(last_july_data_scaled)
+pred_rf_july = rf_regressor.predict(last_july_data_scaled)
 
-# Print the predicted prices for phosphates in June for each model
+# Print the predicted prices for phosphates in July for each model
 print("Predicted Prices for Phosphates in July:")
-print("Multiple Linear Regression Model:", pred_mlr_june[0])
-print("Decision Tree Regression Model:", pred_tr_june[0])
-print("Random Forest Regression Model:", pred_rf_june[0])
+print("Multiple Linear Regression Model:", pred_mlr_july[0])
+print("Decision Tree Regression Model:", pred_tr_july[0])
+print("Random Forest Regression Model:", pred_rf_july[0])
+
+# Assuming the actual phosphate prices for July 2023 are available in 'july_actual_price'
+july_actual_price = 342.5
+
+# Calculate R-squared values for each model
+r2_mlr_july = mlr.score(X_scaled, y)
+r2_tr_july = tr_regressor.score(X_scaled, y)
+r2_rf_july = rf_regressor.score(X_scaled, y)
+
+# Print R-squared values for July for each model
+print("R-squared for Multiple Linear Regression Model in July:", r2_mlr_july)
+print("R-squared for Decision Tree Regression Model in July:", r2_tr_july)
+print("R-squared for Random Forest Regression Model in July:", r2_rf_july)
+
+
+
 
 
 
@@ -476,57 +470,7 @@ selected_data.to_csv('output_nextyear.csv', index=False)
 
 
 #%%
-
-from sklearn.preprocessing import LabelEncoder
-
-# Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
-df_june_2022 = X.copy()
-
-# List of all month names
-all_months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-
-# Fit the LabelEncoder on the list of all months
-label_encoder = LabelEncoder()
-label_encoder.fit(all_months)
-
-# List of months you want to predict
-months_to_predict = ['June 2023', 'July 2023', 'August 2023', 'September 2023', 'October 2023', 'November 2023', 'December 2023', 'January 2024', 'February 2024', 'March 2024', 'April 2024', 'May 2024']
-
-# Loop through each month and make predictions
-for month in months_to_predict:
-    print("Predicting prices for:", month)
-    
-    # Prepare input data for the current month
-    column_name = 'Mois_' + month.replace(' ', '_')
-    df_june_2022[column_name] = True
-    
-    encoded_month_values = label_encoder.transform([pd.to_datetime(month, format='%B %Y').month] * len(df_june_2022))
-    df_june_2022['Month'] = encoded_month_values
-    
-    current_month_data = df_june_2022.copy()
-    current_month_data_scaled = current_month_data.copy()
-    current_month_data_scaled.loc[:, numeric_columns] = scaler.transform(current_month_data[numeric_columns])
-    
-    # Predict phosphate prices for the current month using the trained models
-    pred_mlr_month = mlr.predict(current_month_data_scaled)
-    pred_tr_month = tr_regressor.predict(current_month_data_scaled)
-    pred_rf_month = rf_regressor.predict(current_month_data_scaled)
-    
-    # Store the predicted prices in the DataFrame
-    current_month_data['Predicted Price MLR'] = pred_mlr_month
-    current_month_data['Predicted Price TR'] = pred_tr_month
-    current_month_data['Predicted Price RF'] = pred_rf_month
-    
-    # Append the current month's data to the final DataFrame
-    df_predicted = df_predicted.append(current_month_data, ignore_index=True)
-    
-    # Reset the added columns for the next iteration
-    df_june_2022[column_name] = False
-
-# Display the final DataFrame with predicted prices
-print(df_predicted)
-
-##%
+import re
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
@@ -624,21 +568,6 @@ num_iterations = 12
 for i in range(num_iterations):
     print("Iteration:", i+1)
     
-    
-    # Create an input DataFrame for June 2023 data using historical data
-    input_data = {
-        'Diesel Price (Dollars US par gallon)': df['Diesel Price (Dollars US par gallon)'].iloc[-1:].values.item(),
-        'Phosphate / Diesel Price Ratio': df['Phosphate / Diesel Price Ratio'].iloc[-1:].values.item(),
-    }
-
-    # Prepare input data for prediction
-    input_df = pd.DataFrame(input_data, index=[0])
-
-    # Make sure the column names match the ones used during training
-    input_df = input_df[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-
-    # Transform the input data using the trained scaler
-    input_scaled = scaler.transform(input_df)
 
     
     # Load pre-trained models
@@ -652,13 +581,29 @@ for i in range(num_iterations):
     rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
     rf_regressor.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']], historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
 
+        
+    # Create an input DataFrame for June 2023 data using historical data
+    input_data = {
+        'Diesel Price (Dollars US par gallon)': 2.59,
+        'Phosphate / Diesel Price Ratio': 450.426,
+    }
+
+    # Prepare input data for prediction
+    input_df = pd.DataFrame(input_data, index=[0])
+
+    # Make sure the column names match the ones used during training
+    input_df = input_df[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
+
+    # Transform the input data using the trained scaler
+    input_scaled = scaler.transform(input_df)
+
     # Predict the phosphate price for the next month using the trained models
     pred_mlr_next_month = mlr.predict(input_scaled)
     pred_tr_next_month = tr_regressor.predict(input_scaled)
     pred_rf_next_month = rf_regressor.predict(input_scaled)
-
+    
     # Print the predicted prices for the next month for each model
-    print("Predicted Prices for the Next Month:")
+    print("Predicted Prices for month num:" , i+1)
     print("Multiple Linear Regression Model:", pred_mlr_next_month[0])
     print("Decision Tree Regression Model:", pred_tr_next_month[0])
     print("Random Forest Regression Model:", pred_rf_next_month[0])
@@ -666,10 +611,15 @@ for i in range(num_iterations):
     initial_value = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1:].values.item()
     initial_ratio = df['Phosphate / Diesel Price Ratio'].iloc[-1:].values.item()
     initial_ratio_f = float(initial_ratio)
+    # Make sure i+7 doesn't exceed 12
+    if i + 7 <= 12:
+        month_value = i + 7
+    else:
+        month_value = (i + 7) - 12
 
     # Store the predicted prices in the dataset
     new_row = {
-    'Mois': pd.Timestamp.now().replace(month=(i+7) % 12 + 1).strftime('%B %Y'),
+    'Mois': pd.Timestamp.now().replace(month=month_value).strftime('%B %Y'),
     'Phosphate Price (Dollars américains par tonne métrique)': pred_rf_next_month[0],
     'Diesel Price (Dollars US par gallon)': 2.43,
     'Phosphate ROC': ((pred_rf_next_month[0] - initial_value) / initial_value) * 100,
@@ -687,7 +637,7 @@ for i in range(num_iterations):
     
     
     
-    print("Predicted prices for", pd.Timestamp.now().replace(month=i+7).strftime('%B %Y'), "added to the dataset.")
+    print("Predicted prices for", pd.Timestamp.now().replace(month=month_value).strftime('%B %Y'), "added to the dataset.")
     print("-------------------------------")
 
 # Save the updated DataFrame with predicted prices

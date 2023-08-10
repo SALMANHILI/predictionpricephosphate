@@ -81,8 +81,6 @@ X = pd.get_dummies(X, columns=["Mois"])
 
 
 
-
-
 #%%
 import pandas as pd
 import numpy as np
@@ -560,7 +558,17 @@ scaler = StandardScaler()
 
 # Fit the scaler on historical data
 scaler.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']])
+mlr = LinearRegression()
+mlr.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']],
+        historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
 
+tr_regressor = DecisionTreeRegressor(random_state=0)
+tr_regressor.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']],
+                 historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
+
+rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
+rf_regressor.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']],
+                 historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
 # Define the number of iterations (months to predict)
 num_iterations = 12
 
@@ -568,20 +576,6 @@ num_iterations = 12
 for i in range(num_iterations):
     print("Iteration:", i+1)
     
-
-    
-    # Load pre-trained models
-    # Load pre-trained models
-    mlr = LinearRegression()
-    mlr.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']], historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
-
-    tr_regressor = DecisionTreeRegressor(random_state=0)
-    tr_regressor.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']], historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
-
-    rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
-    rf_regressor.fit(historical_data[['Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']], historical_data['Phosphate Price (Dollars américains par tonne métrique)'])
-
-        
     # Create an input DataFrame for June 2023 data using historical data
     input_data = {
         'Diesel Price (Dollars US par gallon)': 2.59,
@@ -608,6 +602,7 @@ for i in range(num_iterations):
     print("Decision Tree Regression Model:", pred_tr_next_month[0])
     print("Random Forest Regression Model:", pred_rf_next_month[0])
     
+    
     initial_value = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1:].values.item()
     initial_ratio = df['Phosphate / Diesel Price Ratio'].iloc[-1:].values.item()
     initial_ratio_f = float(initial_ratio)
@@ -633,8 +628,6 @@ for i in range(num_iterations):
     # Concatenate the new row DataFrame with the existing DataFrame
     df = pd.concat([df, new_row_df], ignore_index=True)
 
-        
-    
     
     
     print("Predicted prices for", pd.Timestamp.now().replace(month=month_value).strftime('%B %Y'), "added to the dataset.")

@@ -61,7 +61,7 @@ df['Phosphate ROC'] = df['Phosphate ROC'].str.rstrip('%').astype(float)  # Remov
 
 # Convert 'Diesel ROC' column to numeric values
 df['Diesel ROC'] = df['Diesel ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
-df['Diesel ROC'] = df['Diesel ROC'].str.replace(',', '.')  # Replace commas with dots
+df['Diesel ROC'] = df['Desel ROC'].str.replace(',', '.')  # Replace commas with dots
 df['Diesel ROC'] = df['Diesel ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
 
 # Remove both dots and commas from 'Phosphate / Diesel Price Ratio' column
@@ -203,7 +203,10 @@ print("R-squared for Random Forest Regression Model in July:", r2_rf_july)
 # Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
 
 # Scale the data for June 2022 using the previously defined scaler (scaler_june)
-df_june_2022= X.iloc[-12:].copy() 
+df_june_2022= X.iloc[:-12].copy() 
+
+
+
 data_june_2022_scaled = scaler.transform(df_june_2022)
 
 # Make predictions for June 2022 using the trained models (mlr, tr_regressor, rf_regressor)
@@ -596,6 +599,7 @@ for i in range(num_iterations):
     pred_tr_next_month = tr_regressor.predict(input_scaled)
     pred_rf_next_month = rf_regressor.predict(input_scaled)
     
+    
     # Print the predicted prices for the next month for each model
     print("Predicted Prices for month num:" , i+1)
     print("Multiple Linear Regression Model:", pred_mlr_next_month[0])
@@ -635,3 +639,226 @@ for i in range(num_iterations):
 
 # Save the updated DataFrame with predicted prices
 df.to_csv('phosphate36_predicted.csv', index=False)
+
+
+#%%
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
+from keras.layers import LSTM, Dense,Dropout
+from keras.models import Sequential
+import re
+from sklearn.preprocessing import StandardScaler
+from tensorflow import keras
+from keras import layers
+
+df = pd.read_csv('C:\\Users\\asus\\Desktop\\intern\\predictionpricephosphates\\phosphate36.csv')
+
+# Check the dataset
+print(df.head())
+
+# Modify the column names to match the actual column names in the dataset
+df.columns = ['Mois',
+            'Phosphate Price (Dollars américains par tonne métrique)',
+            'Diesel Price (Dollars US par gallon)',
+            'Phosphate ROC',
+            'Diesel ROC',
+            'Phosphate / Diesel Price Ratio']
+
+# Modify the column names to match the actual column names in the dataset
+df.columns = ['Mois',
+            'Phosphate Price (Dollars américains par tonne métrique)',
+            'Diesel Price (Dollars US par gallon)',
+            'Phosphate ROC',
+            'Diesel ROC',
+            'Phosphate / Diesel Price Ratio']
+
+# Define the month mapping
+
+# Map the month names
+df['Mois'] = df['Mois']
+# Convert 'Phosphate Price' column to numeric values
+df['Phosphate Price (Dollars américains par tonne métrique)'] = df['Phosphate Price (Dollars américains par tonne métrique)'].astype(str).str.replace(',', '.').astype(float)
+
+# Convert 'Diesel Price' column to numeric values
+df['Diesel Price (Dollars US par gallon)'] = df['Diesel Price (Dollars US par gallon)'].str.replace(',', '.').astype(float)
+
+# Convert 'Phosphate ROC' column to numeric values
+df['Phosphate ROC'] = df['Phosphate ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
+df['Phosphate ROC'] = df['Phosphate ROC'].str.replace(',', '.')  # Replace commas with dots
+df['Phosphate ROC'] = df['Phosphate ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
+
+# Convert 'Diesel ROC' column to numeric values
+df['Diesel ROC'] = df['Diesel ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
+df['Diesel ROC'] = df['Diesel ROC'].str.replace(',', '.')  # Replace commas with dots
+df['Diesel ROC'] = df['Diesel ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
+
+# Remove both dots and commas from 'Phosphate / Diesel Price Ratio' column
+df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].str.replace(',', '.')  # Replace commas with dots
+
+# Split the "Mois" column into "Month" and "Year" columns
+df[["Month", "Year"]] = df["Mois"].str.split(" ", n=1, expand=True)
+
+# Drop the original "Mois" column
+df.drop(columns=["Mois"], inplace=True)
+
+# Display the resulting DataFrame
+print(df)
+#%%
+
+month_mapping = {
+    'janv': 'January',
+    'févr': 'February',
+    'mars': 'March',
+    'avr': 'April',
+    'mai': 'May',
+    'juin': 'June',
+    'juil.': 'July',
+    'juil': 'July',
+    'août': 'August',
+    'sept.': 'September',
+    'sept': 'September',
+    'oct.': 'October',
+    'oct': 'October',
+    'nov.': 'November',
+    'nov': 'November',
+    'déc.': 'December',
+    'déc': 'December'
+}
+
+# Map the month names
+df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
+print(df)
+#%%
+# Convert month names to numerical values
+month_mapping = {'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6,
+                'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11, 'December': 12}
+
+# Map the month names
+df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
+print(df['Month'])
+#%%
+scalar = MinMaxScaler()
+data_training = df.iloc[:-100].copy()
+data_training
+
+data_training_scaled = scalar.fit_transform(data_training)
+print(data_training_scaled.shape)
+data_training_scaled
+data_testing = df.copy()
+data_testing
+X_train = []
+y_train = []
+
+for i in range(60, data_training.shape[0]):
+    X_train.append(data_training_scaled[i-60: i])
+    y_train.append(data_training_scaled[i, 0])
+
+X_train, y_train = np.array(X_train), np.array(y_train)
+X_train.shape, y_train.shape
+
+# Define the input shape for LSTM
+input_shape = (X_train.shape[1], X_train.shape[2])  # (num_timesteps, num_features)
+
+regressor = Sequential()
+
+regressor.add(LSTM(units=50, activation='relu', return_sequences=True, input_shape=input_shape))
+regressor.add(Dropout(0.2))
+
+regressor.add(LSTM(units = 60, activation = 'relu', return_sequences = True))
+regressor.add(Dropout(0.3))
+
+regressor.add(LSTM(units = 80, activation = 'relu', return_sequences = True))
+regressor.add(Dropout(0.4))
+
+regressor.add(LSTM(units = 120, activation = 'relu'))
+regressor.add(Dropout(0.5))
+
+regressor.add(Dense(units = 1))
+regressor.summary()
+
+#%%
+# Compiling the RNN
+regressor.compile(optimizer='adam', loss='mean_squared_error', run_eagerly=True)
+regressor.fit(X_train, y_train, epochs=50, batch_size = 64)
+#%%
+
+# Evaluate the model on the test set
+test_loss = regressor.evaluate(X_train, y_train)
+print(f"Test Loss: {test_loss}")
+
+# Split data into training and test sets
+train_size = int(100)
+train_data = df.iloc[:train_size]
+test_data = df.iloc[train_size:]
+# Feature scaling
+scaler = MinMaxScaler()
+train_scaled = scaler.fit_transform(train_data)
+test_scaled = scaler.transform(test_data)
+
+X_test, y_test = [], []
+for i in range(60, test_scaled.shape[0]):
+    X_test.append(test_scaled[i-60: i])
+    y_test.append(test_scaled[i, 0])
+X_test, y_test = np.array(X_test), np.array(y_test)
+
+#%%
+X_test, y_test = [], []
+print("X_test shape:")
+for i in range(60,test_scaled.shape[0]):
+    X_test.append(test_scaled[i-60:i])
+    print("X_test shape:")
+    print(i)
+    y_test.append(test_scaled[i, 0])
+X_test, y_test = np.array(X_test), np.array(y_test)
+# Print shapes for debugging
+print("X_test shape:", X_test.shape)
+print("Expected input shape for model:", regressor.layers[0].input_shape)
+
+#%%
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
+
+# Assuming data_testing is your DataFrame
+data_testing = df.copy()
+
+# Convert non-numeric month names to numeric values (example mapping)
+month_mapping = {
+    'janvier': 1, 'février': 2, 'mars': 3, 'avril': 4, 'mai': 5, 'juin': 6,
+    'juillet': 7, 'août': 8, 'septembre': 9, 'octobre': 10, 'novembre': 11, 'décembre': 12
+}
+
+data_testing['Month'] = data_testing['Month'].map(month_mapping)
+
+# Extract numeric features for scaling
+numeric_features = ['Phosphate Price (Dollars américains par tonne métrique)','Diesel Price (Dollars US par gallon)','Phosphate ROC','Diesel ROC','Phosphate / Diesel Price Ratio']  # Include other features here
+
+# Initialize the scaler and fit it on the numeric features
+scalar = MinMaxScaler()
+scalar.fit(data_testing[numeric_features])
+
+# Scale the testing data
+data_testing_scaled = scalar.transform(data_testing[numeric_features])
+
+
+# If 'Month' values are numeric strings
+matching_indices = df[(df['Month'] == 'juin') & (df['Year'] == '2023')].index
+
+print(matching_indices)
+# Choose a specific index for prediction (replace 0 with the desired index)
+specific_date_index = matching_indices[0]
+
+# Prepare the input sequence for prediction
+input_sequence = data_testing_scaled[specific_date_index - 60 : specific_date_index]
+
+input_sequence = np.expand_dims(input_sequence, axis=0)  # Add batch dimension
+# Make the prediction
+predicted_scaled_price = regressor.predict(input_sequence)
+
+# Inverse transform the predicted scaled price to the original scale
+predicted_price = scalar.inverse_transform([[predicted_scaled_price, 0, 0, 0, 0, 0]])[0, 0]
+
+print(f"Predicted Phosphate Price for Specific Date (Index {specific_date_index}):", predicted_price)

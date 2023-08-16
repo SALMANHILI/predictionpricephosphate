@@ -890,8 +890,6 @@ df.columns = ['Mois',
               'Diesel ROC',
               'Phosphate / Diesel Price Ratio']
 
-# Map the month names
-df['Mois'] = df['Mois']
 
 # Convert 'Phosphate Price' column to numeric values
 df['Phosphate Price (Dollars américains par tonne métrique)'] = df['Phosphate Price (Dollars américains par tonne métrique)'].astype(str).str.replace(',', '.').astype(float)
@@ -916,8 +914,6 @@ df[["Month", "Year"]] = df["Mois"].str.split(" ", n=1, expand=True)
 df.drop(columns=["Mois"], inplace=True)
 
 # Display the resulting DataFrame
-print(df)
-#%%
 
 month_mapping = {
     'janv': 'January',
@@ -941,165 +937,78 @@ month_mapping = {
 
 # Map the month names
 df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
-print(df)
-#%%
-# Convert month names to numerical values
-month_mapping = {'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6,
-                'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11, 'December': 12}
 
-# Map the month names
-df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
-print(df['Month'])
-#%%
-# X (independent variables) and y (target variable)
-X = df[['Month','Year','Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-y = df['Phosphate Price (Dollars américains par tonne métrique)']
-# Perform one-hot encoding on the "Mois" column
-X = pd.get_dummies(X, columns=["Month"])
-# Initialize the StandardScaler
-scaler = StandardScaler()
-# Scale the data
-x_scaled = scaler.fit_transform(X)
-# Split the data into training and test sets
-x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, test_size=0.26, random_state=0)
-# Train the models
-mlr = LinearRegression() 
-mlr.fit(x_train, y_train)
-mlr_score = mlr.score(x_test, y_test)
-pred_mlr = mlr.predict(x_test)
-expl_mlr = explained_variance_score(pred_mlr, y_test)
+# Calculate Simple Moving Average (SMA) for a 10-day period
+df['SMA_10'] = df['Phosphate Price (Dollars américains par tonne métrique)'].rolling(window=10).mean()
 
-tr_regressor = DecisionTreeRegressor(random_state=0)
-tr_regressor.fit(x_train, y_train)
-tr_regressor_score = tr_regressor.score(x_test, y_test)
-pred_tr = tr_regressor.predict(x_test)
-expl_tr = explained_variance_score(pred_tr, y_test)
+# Calculate Exponential Moving Average (EMA) for a 10-day period
+df['EMA_10'] = df['Phosphate Price (Dollars américains par tonne métrique)'].ewm(span=10, adjust=False).mean()
+def calculate_rsi(data, window=14):
+    delta = data.diff()
+    gain = delta.where(delta > 0, 0)
+    loss = -delta.where(delta < 0, 0)
 
-rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
-rf_regressor.fit(x_train, y_train)
-rf_regressor_score = rf_regressor.score(x_test, y_test)
-rf_pred = rf_regressor.predict(x_test)
-expl_rf = explained_variance_score(rf_pred, y_test)
-# Print the predicted prices for phosphates in June for each model
-print("Multiple Linear Regression Model Score:", round(mlr_score * 100, 2))
-print("Decision Tree Regression Model Score:", round(tr_regressor_score * 100, 2))
-print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))
+    avg_gain = gain.rolling(window=window).mean()
+    avg_loss = loss.rolling(window=window).mean()
 
-#%%
-# Create input features for July 2023
-input_features_july = pd.DataFrame({
-    'Year': [2023],
-    'Diesel Price (Dollars US par gallon)': [2.43],  # Replace with the actual diesel price for July 2023
-    'Phosphate / Diesel Price Ratio': [141.6530],
-    'Month_1': [0],
-    'Month_2': [0],
-    'Month_3': [0],
-    'Month_4': [0],
-    'Month_5': [0],
-    'Month_6': [0],
-    'Month_7': [1],
-    'Month_8': [0],
-    'Month_9': [0],
-    'Month_10': [0],
-    'Month_11': [0],
-    'Month_12': [0]
-})
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
 
+df['RSI'] = calculate_rsi(df['Phosphate Price (Dollars américains par tonne métrique)'])
+window = 20  # Choose an appropriate window
+df['SMA'] = df['Phosphate Price (Dollars américains par tonne métrique)'].rolling(window=window).mean()
+df['StdDev'] = df['Phosphate Price (Dollars américains par tonne métrique)'].rolling(window=window).std()
 
-# Initialize the StandardScaler
-scaler = StandardScaler()
-# Scale the data
-input_features_july_scaled = scaler.fit_transform(input_features_july)
-# Predict phosphate price for July 2023 using each model
-pred_mlr_july = mlr.predict(input_features_july_scaled)
-pred_tr_july = tr_regressor.predict(input_features_july_scaled)
-pred_rf_july = rf_regressor.predict(input_features_july_scaled)
-
-print("Predicted Phosphate Price for July 2023 (MLR):", pred_mlr_july[0])
-print("Predicted Phosphate Price for July 2023 (Decision Tree):", pred_tr_july[0])
-print("Predicted Phosphate Price for July 2023 (Random Forest):", pred_rf_july[0])
-
-
-
-
-# %% ARIMAAAAAAAAAAAAAAA
-
-
-import numpy as np
+# Calculate upper and lower Bollinger Bands
+df['Upper_BB'] = df['SMA'] + (2 * df['StdDev'])
+df['Lower_BB'] = df['SMA'] - (2 * df['StdDev'])
 import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.calibration import LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import explained_variance_score
-from sklearn.preprocessing import StandardScaler
-import re
-# Load the dataset
-df = pd.read_csv("phosphate36.csv", skiprows=1)
-# Check the dataset
+import numpy as np
+
+# Load your data
+# df = pd.read_csv("your_data.csv")
+
+# Calculate Moving Average Convergence Divergence (MACD)
+def calculate_macd(data, short_window=12, long_window=26, signal_window=9):
+    short_ema = data['Phosphate Price (Dollars américains par tonne métrique)'].ewm(span=short_window, adjust=False).mean()
+    long_ema = data['Phosphate Price (Dollars américains par tonne métrique)'].ewm(span=long_window, adjust=False).mean()
+    macd_line = short_ema - long_ema
+    signal_line = macd_line.ewm(span=signal_window, adjust=False).mean()
+    histogram = macd_line - signal_line
+    return macd_line, signal_line, histogram
+
+macd_line, signal_line, histogram = calculate_macd(df)
+
+# Calculate Volume Weighted Average Price (VWAP)
+def calculate_vwap(data):
+    vwap = np.cumsum(data['Phosphate Price (Dollars américains par tonne métrique)'] * (data['Phosphate Price (Dollars américains par tonne métrique)']) / 1) / np.cumsum(data['Phosphate Price (Dollars américains par tonne métrique)'])
+    return vwap
+
+vwap = calculate_vwap(df)
+
+# Calculate Stochastic Oscillator
+def calculate_stochastic(data, window=14):
+    high_max = data['Phosphate Price (Dollars américains par tonne métrique)'].rolling(window=window).max()
+    low_min = data['Phosphate Price (Dollars américains par tonne métrique)'].rolling(window=window).min()
+    stochastic = 100 * (data['Phosphate Price (Dollars américains par tonne métrique)'] - low_min) / (high_max - low_min)
+    return stochastic
+
+stochastic = calculate_stochastic(df)
+
+# Add calculated indicators to your DataFrame
+df['MACD_Line'] = macd_line
+df['MACD_Signal_Line'] = signal_line
+df['MACD_Histogram'] = histogram
+df['VWAP'] = vwap
+df['Stochastic_Oscillator'] = stochastic
+
 print(df.head())
-# Modify the column names to match the actual column names in the dataset
-df.columns = ['Mois',
-              'Phosphate Price (Dollars américains par tonne métrique)',
-              'Diesel Price (Dollars US par gallon)',
-              'Phosphate ROC',
-              'Diesel ROC',
-              'Phosphate / Diesel Price Ratio']
 
-# Map the month names
-df['Mois'] = df['Mois']
 
-# Convert 'Phosphate Price' column to numeric values
-df['Phosphate Price (Dollars américains par tonne métrique)'] = df['Phosphate Price (Dollars américains par tonne métrique)'].astype(str).str.replace(',', '.').astype(float)
-# Convert 'Diesel Price' column to numeric values
-df['Diesel Price (Dollars US par gallon)'] = df['Diesel Price (Dollars US par gallon)'].str.replace(',', '.').astype(float)
-# Convert 'Phosphate ROC' column to numeric values
-df['Phosphate ROC'] = df['Phosphate ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
-df['Phosphate ROC'] = df['Phosphate ROC'].str.replace(',', '.')  # Replace commas with dots
-df['Phosphate ROC'] = df['Phosphate ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
-# Convert 'Diesel ROC' column to numeric values
-df['Diesel ROC'] = df['Diesel ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
-df['Diesel ROC'] = df['Diesel ROC'].str.replace(',', '.')  # Replace commas with dots
-df['Diesel ROC'] = df['Diesel ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
-# Remove both dots and commas from 'Phosphate / Diesel Price Ratio' column
-df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].replace(',', '.').astype(float)
+df.dropna(inplace=True)
 
-# Split the "Mois" column into "Month" and "Year" columns
-df[["Month", "Year"]] = df["Mois"].str.split(" ", n=1, expand=True)
-
-# Drop the original "Mois" column
-df.drop(columns=["Mois"], inplace=True)
-
-# Display the resulting DataFrame
-print(df)
-#%%
-
-month_mapping = {
-    'janv': 'January',
-    'févr': 'February',
-    'mars': 'March',
-    'avr': 'April',
-    'mai': 'May',
-    'juin': 'June',
-    'juil.': 'July',
-    'juil': 'July',
-    'août': 'August',
-    'sept.': 'September',
-    'sept': 'September',
-    'oct.': 'October',
-    'oct': 'October',
-    'nov.': 'November',
-    'nov': 'November',
-    'déc.': 'December',
-    'déc': 'December'
-}
-
-# Map the month names
-df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
-print(df)
+df
 #%%
 # Convert month names to numerical values
 month_mapping = {'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6,
@@ -1108,9 +1017,9 @@ month_mapping = {'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 
 # Map the month names
 df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
 print(df['Month'])
-#%%
+
 # X (independent variables) and y (target variable)
-X = df[['Month','Year','Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
+X = df[['Month','Year','Diesel Price (Dollars US par gallon)', 'Phosphate ROC','Diesel ROC', 'Phosphate / Diesel Price Ratio','SMA_10','EMA_10','RSI','SMA', 'StdDev','Lower_BB', 'Upper_BB','MACD_Line','MACD_Signal_Line','MACD_Histogram','VWAP','Stochastic_Oscillator']]
 y = df['Phosphate Price (Dollars américains par tonne métrique)']
 # Perform one-hot encoding on the "Mois" column
 X = pd.get_dummies(X, columns=["Month"])
@@ -1119,9 +1028,8 @@ scaler = StandardScaler()
 # Scale the data
 x_scaled = scaler.fit_transform(X)
 # Split the data into training and test sets
-x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, test_size=0.26, random_state=0)
+x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, test_size=0.2, random_state=0)
 # Train the models
-
 mlr = LinearRegression() 
 mlr.fit(x_train, y_train)
 mlr_score = mlr.score(x_test, y_test)
@@ -1139,28 +1047,31 @@ rf_regressor.fit(x_train, y_train)
 rf_regressor_score = rf_regressor.score(x_test, y_test)
 rf_pred = rf_regressor.predict(x_test)
 expl_rf = explained_variance_score(rf_pred, y_test)
-
-# Train ARIMA model
-from statsmodels.tsa.arima.model import ARIMA
-arima_model = ARIMA(y_train, order=(3, 2, 3))  # Adjust the order (p,d,q) as needed
-arima_model_fit = arima_model.fit()
-
-# Make predictions with ARIMA
-arima_forecast = arima_model_fit.forecast(steps=len(y_test))
-
 # Print the predicted prices for phosphates in June for each model
 print("Multiple Linear Regression Model Score:", round(mlr_score * 100, 2))
 print("Decision Tree Regression Model Score:", round(tr_regressor_score * 100, 2))
 print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))
-print("ARIMA Model RMSE:", np.sqrt(np.mean((arima_forecast - y_test)**2)))
 
-# Create input features for July 2023
-# ... (your existing code for creating input_features_july and scaling it)
+#%%
 # Create input features for July 2023
 input_features_july = pd.DataFrame({
     'Year': [2023],
     'Diesel Price (Dollars US par gallon)': [2.43],  # Replace with the actual diesel price for July 2023
+    'Diesel ROC': [14.11],  # Replace with the actual diesel price for July 2023
+    'Phosphate ROC': [-3.18],  # Replace with the actual diesel price for July 2023    
     'Phosphate / Diesel Price Ratio': [141.6530],
+    'SMA': [130.1755],
+    'StdDev': [50.634594],
+    'Upper_BB': [231.444688],
+    'Lower_BB': [28.906312],
+    'RSI': [93.526811],
+    'SMA_10': [141.523],
+    'EMA_10': [158.173647],
+    'MACD_Line': [15.810070],
+    'MACD_Signal_Line': [1.171774],
+    'MACD_Histogram': [14.638296],
+    'VWAP': [200.843229],
+    'Stochastic_Oscillator': [100.000000],
     'Month_1': [0],
     'Month_2': [0],
     'Month_3': [0],
@@ -1180,15 +1091,15 @@ input_features_july = pd.DataFrame({
 scaler = StandardScaler()
 # Scale the data
 input_features_july_scaled = scaler.fit_transform(input_features_july)
-
 # Predict phosphate price for July 2023 using each model
 pred_mlr_july = mlr.predict(input_features_july_scaled)
 pred_tr_july = tr_regressor.predict(input_features_july_scaled)
 pred_rf_july = rf_regressor.predict(input_features_july_scaled)
-pred_arima_july = arima_model_fit.forecast(steps=1).iloc[0]  # Forecast using ARIMA
 
 print("Predicted Phosphate Price for July 2023 (MLR):", pred_mlr_july[0])
 print("Predicted Phosphate Price for July 2023 (Decision Tree):", pred_tr_july[0])
 print("Predicted Phosphate Price for July 2023 (Random Forest):", pred_rf_july[0])
-print("Predicted Phosphate Price for July 2023 (ARIMA):", pred_arima_july)
 
+
+
+# %%

@@ -1,9 +1,9 @@
-from flask import Flask ,render_template,jsonify,url_for,flash,redirect, request
+from flask import Flask, render_template, jsonify, url_for, flash, redirect, request
 from flask_wtf import FlaskForm
-from wtforms import StringField,PasswordField,SubmitField,BooleanField
-from wtforms.validators import DataRequired,length,Email,Regexp,EqualTo
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms.validators import DataRequired, length, Email, Regexp, EqualTo
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 import plotly.graph_objs as go
 import json
@@ -12,53 +12,92 @@ from email_validator import validate_email
 from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
-import datetime
-from flask_sqlalchemy import SQLAlchemy
-import numpy as np
-import matplotlib.pyplot as plt
-import csv
-from datetime import datetime, timedelta
-
 import statsmodels.api as sm
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-
-
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import LabelEncoder
-
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn import metrics
-
-
-import pandas as pd
-import matplotlib.pyplot as plt
+from sklearn.metrics import explained_variance_score
 import seaborn as sns
+import re
+import seaborn as sns
+from sklearn.calibration import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import explained_variance_score
 from sklearn.preprocessing import StandardScaler
-import re
-from datetime import datetime, timedelta
-
-import pandas as pd
-import numpy as np
-from datetime import datetime
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn import metrics
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn import metrics
 
 
 app=Flask(__name__)
 app.config['SECRET_KEY']='293b8cad24d6f3600ee5a2d67dc1c3efc48f19d0f84b5c2c229e997409a06d20'
 
+
+# Load the dataset
+df = pd.read_csv("phosphate36.csv")
+# Check the dataset
+# Modify the column names to match the actual column names in the dataset
+df.columns = ['Mois',
+              'Phosphate Price (Dollars américains par tonne métrique)',
+              'Diesel Price (Dollars US par gallon)',
+              'Phosphate ROC',
+              'Diesel ROC',
+              'Phosphate / Diesel Price Ratio']
+
+# Map the month names
+df['Mois'] = df['Mois']
+
+# Convert 'Phosphate Price' column to numeric values
+df['Phosphate Price (Dollars américains par tonne métrique)'] = df['Phosphate Price (Dollars américains par tonne métrique)'].astype(str).str.replace(',', '.').astype(float)
+# Convert 'Diesel Price' column to numeric values
+df['Diesel Price (Dollars US par gallon)'] = df['Diesel Price (Dollars US par gallon)'].str.replace(',', '.').astype(float)
+# Convert 'Phosphate ROC' column to numeric values
+df['Phosphate ROC'] = df['Phosphate ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
+df['Phosphate ROC'] = df['Phosphate ROC'].str.replace(',', '.')  # Replace commas with dots
+df['Phosphate ROC'] = df['Phosphate ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
+# Convert 'Diesel ROC' column to numeric values
+df['Diesel ROC'] = df['Diesel ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
+df['Diesel ROC'] = df['Diesel ROC'].str.replace(',', '.')  # Replace commas with dots
+df['Diesel ROC'] = df['Diesel ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
+# Remove both dots and commas from 'Phosphate / Diesel Price Ratio' column
+df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].astype(str).str.replace(',', '.').astype(float)
+# Split the "Mois" column into "Month" and "Year" columns
+df[["Month", "Year"]] = df["Mois"].str.split(" ", n=1, expand=True)
+
+# Drop the original "Mois" column
+df.drop(columns=["Mois"], inplace=True)
+
+# Display the resulting DataFrame
+
+month_mapping = {
+    'janv': 'January',
+    'févr': 'February',
+    'mars': 'March',
+    'avr': 'April',
+    'mai': 'May',
+    'juin': 'June',
+    'juil.': 'July',
+    'juil': 'July',
+    'août': 'August',
+    'sept.': 'September',
+    'sept': 'September',
+    'oct.': 'October',
+    'oct': 'October',
+    'nov.': 'November',
+    'nov': 'November',
+    'déc.': 'December',
+    'déc': 'December'
+}
+
+# Map the month names
+df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
+
+# Convert month names to numerical values
+month_mapping = {'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 'June': 6,
+                'July': 7, 'August': 8, 'September': 9, 'October': 10, 'November': 11, 'December': 12}
+
+# Map the month names
+
+df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
 
 
 @app.route("/index")
@@ -109,123 +148,37 @@ def inscrire():
     return render_template("public/inscription.html",form=form)
 
 
-# Load the dataset
-df = pd.read_csv("phosphate36.csv", skiprows=1)
-
-# Check the dataset
-print(df.head())
-
-# Modify the column names to match the actual column names in the dataset
-df.columns = ['Mois',
-              'Phosphate Price (Dollars américains par tonne métrique)',
-              'Diesel Price (Dollars US par gallon)',
-              'Phosphate ROC',
-              'Diesel ROC',
-              'Phosphate / Diesel Price Ratio']
-
-# Define the month mapping
-# Define the month mapping
-month_mapping = {
-    'janv': 'January',
-    'févr': 'February',
-    'mars': 'March',
-    'avr': 'April',
-    'mai': 'May',
-    'juin': 'June',
-    'juil.': 'July',
-    'juil': 'July',
-    'août': 'August',
-    'sept.': 'September',
-    'sept': 'September',
-    'oct.': 'October',
-    'oct': 'October',
-    'nov.': 'November',
-    'nov': 'November',
-    'déc.': 'December',
-    'déc': 'December'
-}
-
-# Map the month names
-df['Mois'] = df['Mois'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
-print(df)
-# Convert 'Phosphate Price' column to numeric values
-df['Phosphate Price (Dollars américains par tonne métrique)'] = df['Phosphate Price (Dollars américains par tonne métrique)'].astype(str).str.replace(',', '.').astype(float)
-
-# Convert 'Diesel Price' column to numeric values
-df['Diesel Price (Dollars US par gallon)'] = df['Diesel Price (Dollars US par gallon)'].str.replace(',', '.').astype(float)
-
-# Convert 'Phosphate ROC' column to numeric values
-df['Phosphate ROC'] = df['Phosphate ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
-df['Phosphate ROC'] = df['Phosphate ROC'].str.replace(',', '.')  # Replace commas with dots
-df['Phosphate ROC'] = df['Phosphate ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
-
-# Convert 'Diesel ROC' column to numeric values
-df['Diesel ROC'] = df['Diesel ROC'].replace('-', '0')  # Replace missing values ('-') with '0'
-df['Diesel ROC'] = df['Diesel ROC'].str.replace(',', '.')  # Replace commas with dots
-df['Diesel ROC'] = df['Diesel ROC'].str.rstrip('%').astype(float)  # Remove '%' and convert to float
-
-# Remove both dots and commas from 'Phosphate / Diesel Price Ratio' column
-df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].str.replace('[,.]', '', regex=True)
-
-# Convert 'Phosphate / Diesel Price Ratio' column to numeric values
-df['Phosphate / Diesel Price Ratio'] = df['Phosphate / Diesel Price Ratio'].astype(float)
-
 # X (independent variables) and y (target variable)
-X = df[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
+X = df[['Month','Year','Diesel Price (Dollars US par gallon)', 'Diesel ROC','Phosphate / Diesel Price Ratio']]
+
 y = df['Phosphate Price (Dollars américains par tonne métrique)']
 
-# Assuming the actual phosphate prices for June 2023 are available in 'june_data'
-actual_prices = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1]
-
+# Initialize the StandardScaler
 scaler = StandardScaler()
-    # Predict the variations and rolling averages for June 2023
-historical_data = df[df['Mois'] < 'juin 2023']  # Filter the data for all rows before June 2023
+# Scale the data
+x_scaled = scaler.fit_transform(X)
+# Split the data into training and test sets
+x_train, x_test, y_train, y_test = train_test_split(x_scaled, y, test_size=0.26, random_state=0)
+# Train the models
+mlr = LinearRegression() 
+mlr.fit(x_train, y_train)
+mlr_score = mlr.score(x_test, y_test)
+pred_mlr = mlr.predict(x_test)
 
-    # Create an input DataFrame for June 2023 data using historical data
-input_data = historical_data[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-
-
-    # Assuming you have already defined and preprocessed the 'x_train' and 'y_train' variables
-X = pd.get_dummies(X, columns=["Mois"])
-
-    # Initialize the StandardScaler
-
-    # Scale the data
-X_scaled = scaler.fit_transform(X)
-
-    # Train the models on the entire dataset
-mlr = LinearRegression()
-mlr.fit(X_scaled, y)
+july = mlr.predict(x_test)
+expl_mlr = explained_variance_score(pred_mlr, y_test)
 
 tr_regressor = DecisionTreeRegressor(random_state=0)
-tr_regressor.fit(X_scaled, y)
+tr_regressor.fit(x_train, y_train)
+tr_regressor_score = tr_regressor.score(x_test, y_test)
+pred_tr = tr_regressor.predict(x_test)
+expl_tr = explained_variance_score(pred_tr, y_test)
 
 rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
-rf_regressor.fit(X_scaled, y)
-
-
-@app.route("/predprevmonth",methods=['POST'])
-def predprevmonth():
-    #JUNE 
-
-    current_date = datetime.now()
-    prediction_date = (current_date - timedelta(days=60)).strftime("%B")  # Get the next month
-
-    
-    # Predict the last line's phosphate price for each model
-    last_june_data = X.iloc[-1:].copy()  # Extract the last line's data for June
-    last_june_data_scaled = scaler.transform(last_june_data)  # Scale the last line's data
-
-    pred_mlr_june = mlr.predict(last_june_data_scaled)
-    pred_tr_june = tr_regressor.predict(last_june_data_scaled)
-    pred_rf_june = rf_regressor.predict(last_june_data_scaled)
-
-    accuracy_mlr = (1 - abs((pred_mlr_june[0]-actual_prices) / actual_prices)) * 100
-
-    accuracy_tr = (1 - abs((pred_tr_june[0]-actual_prices) / actual_prices)) * 100
-
-    accuracy_rf = (1 - abs((pred_rf_june[0]-actual_prices) / actual_prices)) * 100
-    return render_template("public/prevmonth.html", prediction_date=prediction_date,actual_prices=actual_prices, accuracy_mlr=accuracy_mlr, accuracy_tr=accuracy_tr, accuracy_rf=accuracy_rf)
+rf_regressor.fit(x_train, y_train)
+rf_regressor_score = rf_regressor.score(x_test, y_test)
+rf_pred = rf_regressor.predict(x_test)
+expl_rf = explained_variance_score(rf_pred, y_test)
 
 
 @app.route("/predpastyear",methods=['POST'])
@@ -324,45 +277,28 @@ def predpastyear():
 @app.route("/prednextmonth",methods=['POST'])
 def prednextmonth():
     #JULY 
-    last_month= X.iloc[-1:].copy() 
+    manual_input = pd.DataFrame({ 'Month':[6],
+        'Year': [2023],
+        'Diesel Price (Dollars US par gallon)': [2.83],  # Replace with the actual diesel price for July 2023
+        'Diesel ROC':[2.83],
+        'Phosphate / Diesel Price Ratio': [148.4567]
+    })
 
-    # Predict the variations and rolling averages for June 2023
-    historical_data = df[df['Mois'] <='juin 2023']  # Filter the data for all rows before June 2023
+
+    input = scaler.transform(manual_input)
+    # right
 
 
-    # Create an input DataFrame for June 2023 data using historical data
-    input_data = historical_data[['Mois', 'Diesel Price (Dollars US par gallon)', 'Phosphate / Diesel Price Ratio']]
-    input_data = {
-        'Diesel Price (Dollars US per gallon)': 2.5,
-        'Phosphate / Diesel Price Ratio': 141.6530,
-    }
+    # Predict phosphate price for July 2023 using each model
+    pred_mlr_july = mlr.predict(input)
+    pred_tr_july = tr_regressor.predict(input)
+    pred_rf_july = rf_regressor.predict(input)
 
-    # Assuming you have already defined and preprocessed the 'x_train' and 'y_train' variables
+    pred_mlr_july[0]
+    pred_tr_july[0]
+    pred_rf_july[0]
 
-    # Initialize the StandardScaler
-    scaler = StandardScaler()
 
-    # Scale the data
-    X_scaled = scaler.fit_transform(X)
-
-    # Train the models on the entire dataset
-    mlr = LinearRegression()
-    mlr.fit(X_scaled, y)
-
-    tr_regressor = DecisionTreeRegressor(random_state=0)
-    tr_regressor.fit(X_scaled, y)
-
-    rf_regressor = RandomForestRegressor(n_estimators=28, random_state=0)
-
-    rf_regressor.fit(X_scaled, y)
-
-    # Predict the last line's phosphate price for each model
-    last_june_data = X.iloc[203:].copy()  # Extract the last line's data for June
-    last_june_data_scaled = scaler.transform(last_june_data)  # Scale the last line's data
-
-    pred_mlr_june = mlr.predict(last_june_data_scaled)
-    pred_tr_june = tr_regressor.predict(last_june_data_scaled)
-    pred_rf_june = rf_regressor.predict(last_june_data_scaled)
 
     return render_template("public/predjune.html")
 

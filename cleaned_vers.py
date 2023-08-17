@@ -46,7 +46,6 @@ df[["Month", "Year"]] = df["Mois"].str.split(" ", n=1, expand=True)
 df.drop(columns=["Mois"], inplace=True)
 
 # Display the resulting DataFrame
-print(df)
 
 month_mapping = {
     'janv': 'January',
@@ -79,6 +78,7 @@ month_mapping = {'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 
 
 df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
 df
+#%%
 
 # X (independent variables) and y (target variable)
 X = df[['Month','Year','Diesel Price (Dollars US par gallon)', 'Diesel ROC','Phosphate / Diesel Price Ratio']]
@@ -116,18 +116,17 @@ print("Multiple Linear Regression Model Score:", round(mlr_score * 100, 2))
 print("Decision Tree Regression Model Score:", round(tr_regressor_score * 100, 2))
 print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))
 
-
+#%%
 manual_input = pd.DataFrame({ 'Month':[6],
     'Year': [2023],
     'Diesel Price (Dollars US par gallon)': [2.83],  # Replace with the actual diesel price for July 2023
-    'Phosphate / Diesel Price Ratio': [148.4567],
-    'Diesel ROC':[2.83]
+    'Diesel ROC':[2.83],
+    'Phosphate / Diesel Price Ratio': [148.4567]
  })
 
 
 input = scaler.transform(manual_input)
 # right
-print(scaler.transform(manual_input))
 
 
 # Predict phosphate price for July 2023 using each model
@@ -146,29 +145,6 @@ print("Predicted Phosphate Price for July 2023 (Random Forest):", pred_rf_july[0
 #%%
 # Actual phosphate price for July
 y_actual = 342.5
-
-"""
-# Calculate the R-squared for each model
-def calculate_r_squared(y_actual, y_predicted):
-    y_mean = y_actual
-    ss_total = sum((y_actual - y_mean) ** 2)
-    ss_residual = sum((y_actual - y_predicted) ** 2)
-    r_squared = 1 - (ss_residual / ss_total)
-    return r_squared
-
-# Calculate R-squared for Multiple Linear Regression model
-r_squared_mlr = calculate_r_squared([y_actual], [pred_mlr_july[0]])
-
-# Calculate R-squared for Decision Tree Regression model
-r_squared_tr = calculate_r_squared([y_actual], [pred_tr_july[0]])
-
-# Calculate R-squared for Random Forest Regression model
-r_squared_rf = calculate_r_squared([y_actual], [pred_rf_july[0]])
-
-print("R-squared (MLR):", r_squared_mlr)
-print("R-squared (Decision Tree):", r_squared_tr)
-print("R-squared (Random Forest):", r_squared_rf)"""
-
 
 
 

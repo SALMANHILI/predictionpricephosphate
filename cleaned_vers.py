@@ -117,11 +117,11 @@ print("Decision Tree Regression Model Score:", round(tr_regressor_score * 100, 2
 print("Random Forest Regression Model Score:", round(rf_regressor_score * 100, 2))
 
 #%%
-manual_input = pd.DataFrame({ 'Month':[6],
+manual_input = pd.DataFrame({ 'Month':[7],
     'Year': [2023],
-    'Diesel Price (Dollars US par gallon)': [2.83],  # Replace with the actual diesel price for July 2023
-    'Diesel ROC':[2.83],
-    'Phosphate / Diesel Price Ratio': [148.4567]
+    'Diesel Price (Dollars US par gallon)': [2.43],  # Replace with the actual diesel price for July 2023
+    'Diesel ROC':[3.67],
+    'Phosphate / Diesel Price Ratio': [141.65]
  })
 
 
@@ -137,6 +137,32 @@ pred_rf_july = rf_regressor.predict(input)
 print("Predicted Phosphate Price for July 2023 (MLR):", pred_mlr_july[0])
 print("Predicted Phosphate Price for July 2023 (Decision Tree):", pred_tr_july[0])
 print("Predicted Phosphate Price for July 2023 (Random Forest):", pred_rf_july[0])
+
+
+#%%
+manual_input = pd.DataFrame({ 'Month':[8],
+    'Year': [2023],
+    'Diesel Price (Dollars US par gallon)': [2.53],  # Replace with the actual diesel price for July 2023
+    'Diesel ROC':[4.11],
+    'Phosphate / Diesel Price Ratio': [135.3767]
+ })
+
+
+input = scaler.transform(manual_input)
+# right
+
+
+# Predict phosphate price for August 2023 using each model
+pred_mlr_august = mlr.predict(input)
+pred_tr_august = tr_regressor.predict(input)
+pred_rf_august = rf_regressor.predict(input)
+
+pred_tr_august[0]
+pred_rf_august[0]
+
+print("Predicted Phosphate Price for August 2023 (MLR):", pred_mlr_august[0])
+print("Predicted Phosphate Price for August 2023 (Decision Tree):", pred_tr_august[0])
+print("Predicted Phosphate Price for August 2023 (Random Forest):", pred_rf_august[0])
 
 
 
@@ -185,7 +211,37 @@ predictions_df = pd.DataFrame({
 # Display the predicted prices for the next 12 months
 predictions_df
 
+#%%
+import matplotlib.pyplot as plt
 
+# Load the data from the CSV file
+data = pd.read_csv('predicted_prices_vf.csv')
+
+# Combine 'Month' and 'Year' columns for the x-axis labels
+months_years = data['Month'] + ' ' + data['Year'].astype(str)
+
+# Extract data for plotting
+predicted_mlr = data['Predicted Phosphate Price (MLR)']
+predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
+predicted_rf = data['Predicted Phosphate Price (Random Forest)']
+# Create a line plot
+plt.figure(figsize=(10, 6))
+
+plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
+plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
+plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+
+plt.xlabel('Month and Year')
+plt.ylabel('Predicted Phosphate Price')
+plt.title('Predicted Phosphate Prices by Model')
+plt.legend()
+plt.xticks(rotation=45)
+# Customize y-axis tick locations and labels
+plt.yticks(range(100, 401, 100))  # Adjust the range as needed
+
+plt.tight_layout()
+
+plt.show()
 
 
 
@@ -233,3 +289,66 @@ predictions_df = pd.DataFrame({
 # Display the predicted prices for the next 12 months
 predictions_df
 # %%
+data = pd.read_csv('predicted_prices_lastyear_v5.csv')
+
+# Combine 'Month' and 'Year' columns for the x-axis labels
+months_years = data['Month'] + ' ' + data['Year'].astype(str)
+
+# Extract data for plotting
+predicted_mlr = data['Predicted Phosphate Price (MLR)']
+predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
+predicted_rf = data['Predicted Phosphate Price (Random Forest)']
+actual_data = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-12:].values
+actual_data
+# Create a line plot
+plt.figure(figsize=(10, 6))
+
+plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
+plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
+plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+plt.plot(months_years, actual_data, marker='o', label='actual data')
+
+plt.xlabel('Month and Year')
+plt.ylabel('Predicted Phosphate Price')
+plt.title('Predicted Phosphate Prices by Model')
+plt.legend()
+plt.xticks(rotation=45)
+# Customize y-axis tick locations and labels
+plt.yticks(range(100, 401, 100))  # Adjust the range as needed
+
+plt.tight_layout()
+
+plt.show()
+#%%
+
+import matplotlib.pyplot as plt
+
+# Load the data from the CSV file
+data = pd.read_csv('predicted_prices_vf.csv')
+
+# Combine 'Month' and 'Year' columns for the x-axis labels
+months_years = data['Month'] + ' ' + data['Year'].astype(str)
+
+# Extract data for plotting
+predicted_mlr = data['Predicted Phosphate Price (MLR)']
+predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
+predicted_rf = data['Predicted Phosphate Price (Random Forest)']
+actual_data
+# Create a line plot
+plt.figure(figsize=(10, 6))
+
+plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
+plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
+plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+
+plt.xlabel('Month and Year')
+plt.ylabel('Predicted Phosphate Price')
+plt.title('Predicted Phosphate Prices by Model')
+plt.legend()
+plt.xticks(rotation=45)
+# Customize y-axis tick locations and labels
+plt.yticks(range(100, 401, 100))  # Adjust the range as needed
+
+plt.tight_layout()
+
+plt.show()

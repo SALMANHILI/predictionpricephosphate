@@ -26,6 +26,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import explained_variance_score
 from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
 
 
 app=Flask(__name__)
@@ -102,9 +103,10 @@ df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]
 
 @app.route("/index")
 def index():
-    df = pd.read_csv("prix.csv")
-    df = pd.DataFrame(df, columns=['Mois', 'Prix', 'Variation'])
-    actual_price = float(df['Prix'].iloc[-1])  # Actual price from the last line of 'prix.csv'
+    df = pd.read_csv("phosphate36.csv")
+    df = pd.DataFrame(df, columns=['Mois','Phosphate Price (Dollars américains par tonne métrique)','Diesel Price (Dollars US par gallon)','Phosphate ROC','Diesel ROC','Phosphate/Diesel Price Ratio'])
+    actual_price_str = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1]
+    actual_price = float(actual_price_str.replace(',', '.'))
     return render_template('public/index.html', actual_price=actual_price)
    
 
@@ -181,107 +183,122 @@ rf_pred = rf_regressor.predict(x_test)
 expl_rf = explained_variance_score(rf_pred, y_test)
 
 
-@app.route("/predpastyear",methods=['POST'])
+
+
+
+
+
+
+
+@app.route("/predpastyear",methods=['GET', 'POST'])
 def predpastyear():
     
-    # Step 1: Prepare Data for June 2022 and Make Predictions
-    # Assuming you have the data for June 2022 in a DataFrame named "df_june_2022"
+                
+        # Create a DataFrame to store the input values for the next 12 months
+        future_input = pd.DataFrame({
+            'Month': [8, 9, 10, 11, 12, 1, 2, 3, 4, 5,6, 7],
+            'Year': [2022,2022,2022,2022,2022,2023,2023,2023,2023,2023,2023,2023],  # Replace with the appropriate year values
+            'Diesel Price (Dollars US par gallon)': [3.6, 3.44, 4.35, 4.06, 3.12, 3.27, 2.83, 2.75, 2.59, 2.35, 3.43, 2.53],  # Replace with the actual diesel price for each month
+            'Diesel ROC':[-2.71,-4.8,26.49,-6.49,-23.28,4.81,-13.31,-3.00,-5.61,-9.53,3.67,4.11],
+            'Phosphate / Diesel Price Ratio': [65.91,86.58,88.98,93.15,73.07,73.83,96.24,91.82,113.87,125.59,133.05,147.05]   # Replace with the actual ratios for each month
+        })
 
-    # Scale the data for June 2022 using the previously defined scaler (scaler_june)
-    df_june_2022= X.iloc[-13:].copy() 
-    data_june_2022_scaled = scaler.transform(df_june_2022)
 
-    # Make predictions for June 2022 using the trained models (mlr, tr_regressor, rf_regressor)
-    pred_mlr_june_2022 = mlr.predict(data_june_2022_scaled)
-    pred_tr_june_2022 = tr_regressor.predict(data_june_2022_scaled)
-    pred_rf_june_2022 = rf_regressor.predict(data_june_2022_scaled)
+        # Scale the future input data
+        future_input_scaled = scaler.transform(future_input)
 
-    # Step 2: Create "df_with_june_predicted" DataFrame
-    # Create a new DataFrame to store the predicted values for each month
-    df_with_june_predicted = df_june_2022.copy()
+        # Predict phosphate prices for the next 12 months using each model
+        pred_mlr_future = mlr.predict(future_input_scaled)
+        pred_tr_future = tr_regressor.predict(future_input_scaled)
+        pred_rf_future = rf_regressor.predict(future_input_scaled)
 
-    # Add the predicted prices for June 2022 to the DataFrame
-    df_with_june_predicted['Predicted Price MLR'] = pred_mlr_june_2022
-    df_with_june_predicted['Predicted Price TR'] = pred_tr_june_2022
-    df_with_june_predicted['Predicted Price RF'] = pred_rf_june_2022
+        # Create a DataFrame to store the predicted prices for the next 12 months
 
-    # Step 3: Continue Predictions for Subsequent Months
-    # Now you can proceed with the loop to make predictions for the remaining months
-    # (July 2022 to June 2023) using the trained models and the "df_with_june_predicted" DataFrame.
 
-    # Define the list of months in the order you want to predict (from July 2022 to June 2023)
-    months_to_predict = ['July 2022', 'August 2022', 'September 2022', 'October 2022', 'November 2022', 'December 2022',
-                        'January 2023', 'February 2023', 'March 2023', 'April 2023', 'May 2023', 'June 2023']
+        actual_data = pd.read_csv('phosphate-36.csv', skiprows=1)['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-12:].values
 
-    # Initialize empty lists to store predicted prices for each model
-    predicted_prices_mlr = []
-    predicted_prices_tr = []
-    predicted_prices_rf = []
+        # Create a DataFrame to store the predicted prices for the next 12 months
+        futurepredictions_df = pd.DataFrame({
+            'Month': future_input['Month'],
+            'Year': future_input['Year'],
+            'Predicted Phosphate Price (MLR)': pred_mlr_future,
+            'Predicted Phosphate Price (Decision Tree)': pred_tr_future,
+            'Predicted Phosphate Price (Random Forest)': pred_rf_future,
+            'actual_data' : actual_data
+        })
 
-    # Initialize the LabelEncoder object
-    label_encoder = LabelEncoder()
-    # Loop through each month and make predictions
-    for month in months_to_predict:
-        print("Current Month:", month)
-        print("df_with_june_predicted:")
-        print(df_with_june_predicted)
 
-        # Prepare input data for the current month
-        column_name = 'Mois_' + month.capitalize()
-        if column_name in df_with_june_predicted.columns:
-            current_month_data = df_with_june_predicted[df_with_june_predicted[column_name] == 1]
+        # Map the numerical month values back to month names
+        #predictions_df['Month'] = predictions_df['Month'].map(month_mapping)
+        # Define a dictionary to map numerical month values to month names
+        reverse_month_mapping = {1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June',
+                                7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November', 12: 'December'}
 
-            # Check if the DataFrame for the current month is empty
-            if not current_month_data.empty:
-                # Encode the "Month" column using LabelEncoder
-                current_month_data['Month'] = label_encoder.transform(current_month_data['Month'])
+        # Map the numerical month values back to month names
+        futurepredictions_df['Month'] = futurepredictions_df['Month'].map(reverse_month_mapping)
 
-                # Assuming 'numeric_columns' is a list of numerical column names
-                numeric_columns = ['Phosphate Price (Dollars américains par tonne métrique)', 'Diesel Price (Dollars US par gallon)', 'Phosphate ROC', 'Diesel ROC', 'Phosphate / Diesel Price Ratio']
 
-                # Scale numeric data for the current month
-                current_month_data_scaled = current_month_data.copy()
-                current_month_data_scaled[numeric_columns] = scaler.transform(current_month_data[numeric_columns])
+        # Display the predicted prices for the next 12 months
+        futurepredictions_df
 
-                # Predict phosphate prices for the current month using the trained models
-                pred_mlr_month = mlr.predict(current_month_data_scaled)
-                pred_tr_month = tr_regressor.predict(current_month_data_scaled)
-                pred_rf_month = rf_regressor.predict(current_month_data_scaled)
 
-                # Append the predicted prices to the respective lists
-                predicted_prices_mlr.append(pred_mlr_month[0])
-                predicted_prices_tr.append(pred_tr_month[0])
-                predicted_prices_rf.append(pred_rf_month[0])
 
-                # Calculate the accuracy of the predictions for each model
-                actual_price = current_month_data['Phosphate Price (Dollars américains par tonne métrique)'].values[0]
-                accuracy_mlr = 100 * (1 - abs((pred_mlr_month[0] - actual_price) / actual_price))
-                accuracy_tr = 100 * (1 - abs((pred_tr_month[0] - actual_price) / actual_price))
-                accuracy_rf = 100 * (1 - abs((pred_rf_month[0] - actual_price) / actual_price))
+        futurepredictions_df.to_csv('predicted_prices_vf.csv', index=False)
 
-                print("------------------------------------------------------")
-            else:
-                print("------------------------------------------------------")
-        else:
-                print("------------------------------------------------------")
-            
+
+        import matplotlib.pyplot as plt
+
+        # Load the data from the CSV file
+        data = pd.read_csv('predicted_prices_vf.csv')
+
+        # Combine 'Month' and 'Year' columns for the x-axis labels
+        months_years = data['Month'] + ' ' + data['Year'].astype(str)
+
+        # Extract data for plotting
+        predicted_mlr = data['Predicted Phosphate Price (MLR)']
+        predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
+        predicted_rf = data['Predicted Phosphate Price (Random Forest)']
+        actual_data
+        # Create a line plot
+        plt.figure(figsize=(10, 6))
+
+        plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
+        plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
+        plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+
+        plt.xlabel('Month and Year')
+        plt.ylabel('Predicted Phosphate Price')
+        plt.title('Predicted Phosphate Prices by Model')
+        plt.legend()
+        plt.xticks(rotation=45)
+        # Customize y-axis tick locations and labels
+        plt.yticks(range(100, 401, 100))  # Adjust the range as needed
+
+        plt.tight_layout()
+
+        plt.show()
+
+
         
-        # Read the CSV file into a DataFrame
-        df = pd.read_csv("RESULTS.csv")
-
-        # Create a new DataFrame containing only the 'Mois' and 'Actual_Price' columns
-        past_year = df.copy()
-        return render_template("public/predjune.html", actual_price=actual_price, accuracy_mlr=accuracy_mlr, accuracy_tr=accuracy_tr, accuracy_rf=accuracy_rf, past_year=past_year)
+        return render_template("public/predpastyear.html",futurepredictions_df=futurepredictions_df)
 
 
-@app.route("/prednextmonth",methods=['POST'])
-def prednextmonth():
+
+
+
+
+
+
+
+
+@app.route("/predpastmonth", methods=['GET', 'POST'])
+def predpastmonth():
     #JULY 
-    manual_input = pd.DataFrame({ 'Month':[6],
+    manual_input = pd.DataFrame({ 'Month':[7],
         'Year': [2023],
-        'Diesel Price (Dollars US par gallon)': [2.83],  # Replace with the actual diesel price for July 2023
-        'Diesel ROC':[2.83],
-        'Phosphate / Diesel Price Ratio': [148.4567]
+        'Diesel Price (Dollars US par gallon)': [2.43],  # Replace with the actual diesel price for July 2023
+        'Diesel ROC':[3.67],
+        'Phosphate / Diesel Price Ratio': [141.65]
     })
 
 
@@ -298,23 +315,111 @@ def prednextmonth():
     pred_tr_july[0]
     pred_rf_july[0]
 
+    return render_template("public/predpastmonth.html",pred_mlr_july= pred_mlr_july,pred_tr_july= pred_tr_july,pred_rf_july= pred_rf_july)
 
 
-    return render_template("public/predjune.html")
+
+
+
+
+@app.route("/prednextmonth", methods=['GET', 'POST'])
+def prednextmonth():
+    #AUGUST 
+    manual_input = pd.DataFrame({ 'Month':[8],
+        'Year': [2023],
+        'Diesel Price (Dollars US par gallon)': [2.53],  # Replace with the actual diesel price for July 2023
+        'Diesel ROC':[4.11],
+        'Phosphate / Diesel Price Ratio': [135.3767]
+    })
+
+
+    input = scaler.transform(manual_input)
+    # right
+    # Predict phosphate price for July 2023 using each model
+    pred_mlr_august = mlr.predict(input)
+
+    pred_tr_august = tr_regressor.predict(input)
+    pred_rf_august = rf_regressor.predict(input)
+
+    pred_mlr_august[0]
+    pred_tr_august[0]
+    pred_rf_august[0]
+
+    return render_template("public/prednextmonth.html",pred_mlr_august= pred_mlr_august,pred_tr_august= pred_tr_august,pred_rf_august= pred_rf_august)
 
     
-@app.route("/prednextyear")
-def phosphatesRF():
+@app.route("/prednextyear", methods=['GET', 'POST'])
+def prednextyear():
  
 
+    # Create a DataFrame to store the input values for the next 12 months
+    future_input = pd.DataFrame({
+        'Month': [8, 9, 10, 11, 12, 1, 2, 3, 4, 5, 6, 7],
+        'Year': [2023,2023,2023,2023,2023,2024,2024,2024,2024,2024,2024,2024],  # Replace with the appropriate year values
+        'Diesel Price (Dollars US par gallon)': [2.83,3.83,1.83,2.83,3.83,1.83,2.83,3.83,1.83,2.83,3.83,2.83],  # Replace with the actual diesel price for each month
+            'Diesel ROC':[-2.71,-4.8,26.49,-6.49,-23.28,4.81,-13.31,-3.00,-5.61,-9.53,3.67,4.11],
+        'Phosphate / Diesel Price Ratio': [148.4567,128.4567,108.4567,100.4567,90.4567,148.4567,158.4567,130.4567,108.4567,90.4567,80.4567,148.4567]   # Replace with the actual ratios for each month
+    })
 
+    # Scale the future input data
+    future_input_scaled = scaler.transform(future_input)
+
+    # Predict phosphate prices for the next 12 months using each model
+    pred_mlr_future = mlr.predict(future_input_scaled)
+    pred_tr_future = tr_regressor.predict(future_input_scaled)
+    pred_rf_future = rf_regressor.predict(future_input_scaled)
+
+    # Create a DataFrame to store the predicted prices for the next 12 months
+    predictions_df = pd.DataFrame({
+        'Month': future_input['Month'],
+        'Year': future_input['Year'],
+        'Predicted Phosphate Price (MLR)': pred_mlr_future,
+        'Predicted Phosphate Price (Decision Tree)': pred_tr_future,
+        'Predicted Phosphate Price (Random Forest)': pred_rf_future
+    })
+
+    # Map the numerical month values back to month names
+    #predictions_df['Month'] = predictions_df['Month'].map(month_mapping)
+
+    # Display the predicted prices for the next 12 months
+    predictions_df
+
+
+    # Load the data from the CSV file
+    data = pd.read_csv('predicted_prices_vf.csv')
+
+    # Combine 'Month' and 'Year' columns for the x-axis labels
+    months_years = data['Month'] + ' ' + data['Year'].astype(str)
+
+    # Extract data for plotting
+    predicted_mlr = data['Predicted Phosphate Price (MLR)']
+    predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
+    predicted_rf = data['Predicted Phosphate Price (Random Forest)']
+    # Create a line plot
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
+    plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
+    plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+
+    plt.xlabel('Month and Year')
+    plt.ylabel('Predicted Phosphate Price')
+    plt.title('Predicted Phosphate Prices by Model')
+    plt.legend()
+    plt.xticks(rotation=45)
+    # Customize y-axis tick locations and labels
+    plt.yticks(range(100, 401, 100))  # Adjust the range as needed
+
+    plt.tight_layout()
+
+    plt.show()
 
 
     current_date = datetime.now()
     prediction_date = (current_date + timedelta(days=30)).strftime("%B")  # Get the next month
 
     
-    return render_template("public/nextmonth.html")
+    return render_template("public/prednextyear.html",predictions_df=predictions_df)
 
 
 if __name__ == '__main__':

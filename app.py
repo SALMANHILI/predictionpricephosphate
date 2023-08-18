@@ -27,10 +27,18 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import explained_variance_score
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
+import io
+import os
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+from flask import Response
+import base64
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 
 
 app=Flask(__name__)
 app.config['SECRET_KEY']='293b8cad24d6f3600ee5a2d67dc1c3efc48f19d0f84b5c2c229e997409a06d20'
+app.config['STATIC_FOLDER'] = 'static'
 
 
 # Load the dataset
@@ -215,7 +223,7 @@ def predpastyear():
         # Create a DataFrame to store the predicted prices for the next 12 months
 
 
-        actual_data = pd.read_csv('phosphate-36.csv', skiprows=1)['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-12:].values
+        actual_data = pd.read_csv('phosphate36.csv')['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-12:].values
 
         # Create a DataFrame to store the predicted prices for the next 12 months
         futurepredictions_df = pd.DataFrame({
@@ -243,50 +251,52 @@ def predpastyear():
 
 
 
-        futurepredictions_df.to_csv('predicted_prices_vf.csv', index=False)
+        # Create the function to generate the plot as an image response
 
 
-        import matplotlib.pyplot as plt
-
-        # Load the data from the CSV file
-        data = pd.read_csv('predicted_prices_vf.csv')
-
-        # Combine 'Month' and 'Year' columns for the x-axis labels
-        months_years = data['Month'] + ' ' + data['Year'].astype(str)
-
-        # Extract data for plotting
-        predicted_mlr = data['Predicted Phosphate Price (MLR)']
-        predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
-        predicted_rf = data['Predicted Phosphate Price (Random Forest)']
-        actual_data
-        # Create a line plot
-        plt.figure(figsize=(10, 6))
-
-        plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
-        plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
-        plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
-
-        plt.xlabel('Month and Year')
-        plt.ylabel('Predicted Phosphate Price')
-        plt.title('Predicted Phosphate Prices by Model')
-        plt.legend()
-        plt.xticks(rotation=45)
-        # Customize y-axis tick locations and labels
-        plt.yticks(range(100, 401, 100))  # Adjust the range as needed
-
-        plt.tight_layout()
-
-        plt.show()
-
-
+        # Combine 'Month' and 'Year' columns to create 'months_years'
+        futurepredictions_df['months_years'] = futurepredictions_df['Month'] + ' ' + futurepredictions_df['Year'].astype(str)
         
-        return render_template("public/predpastyear.html",futurepredictions_df=futurepredictions_df)
+        # Extract data for plotting
+        pred_mlr_future = futurepredictions_df['Predicted Phosphate Price (MLR)']
+        pred_tr_future = futurepredictions_df['Predicted Phosphate Price (Decision Tree)']
+        pred_rf_future = futurepredictions_df['Predicted Phosphate Price (Random Forest)']
+        actual_data = futurepredictions_df['actual_data']  # Use the actual data column
+
+        # Create the months_years variable by combining 'Month' and 'Year' columns
+        months_years = futurepredictions_df['months_years']
+
+        # Call the plot_to_image function with the required arguments
+        plot_filename = "static/plot.png"
+        plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data, plot_filename)
+
+        return render_template("public/predpastyear.html", futurepredictions_df=futurepredictions_df, plot_filename=plot_filename)
+
+
+def plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data, filename):
+    fig = Figure(figsize=(10, 6))
+    ax = fig.add_subplot(111)
+    
+    # ... Your plot code here ...
+            # Plotting the data
+    ax.plot(months_years, pred_mlr_future, marker='o', label='MLR')
+    ax.plot(months_years, pred_tr_future, marker='o', label='Decision Tree')
+    ax.plot(months_years, pred_rf_future, marker='o', label='Random Forest')
+    ax.plot(months_years, actual_data, marker='o', label='Actual Data')  # Adding actual data to the plot
+            
+    ax.set_xlabel('Month and Year')
+    ax.set_ylabel('Predicted Phosphate Price')
+    ax.set_title('Predicted Phosphate Prices by Model')
+    ax.legend()
+    ax.set_xticklabels(months_years, rotation=45)
+
+    # Save the plot to a file
+    fig.savefig(filename)
 
 
 
 
-
-
+            
 
 
 
@@ -314,8 +324,13 @@ def predpastmonth():
     pred_mlr_july[0]
     pred_tr_july[0]
     pred_rf_july[0]
+    
+    df = pd.read_csv("phosphate36.csv")
+    df = pd.DataFrame(df, columns=['Mois','Phosphate Price (Dollars américains par tonne métrique)','Diesel Price (Dollars US par gallon)','Phosphate ROC','Diesel ROC','Phosphate/Diesel Price Ratio'])
+    actual_price_str = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1]
+    actual_price = float(actual_price_str.replace(',', '.'))
 
-    return render_template("public/predpastmonth.html",pred_mlr_july= pred_mlr_july,pred_tr_july= pred_tr_july,pred_rf_july= pred_rf_july)
+    return render_template("public/predpastmonth.html",pred_mlr_july= pred_mlr_july,pred_tr_july= pred_tr_july,pred_rf_july= pred_rf_july, actual_price=actual_price)
 
 
 
@@ -370,7 +385,7 @@ def prednextyear():
     pred_rf_future = rf_regressor.predict(future_input_scaled)
 
     # Create a DataFrame to store the predicted prices for the next 12 months
-    predictions_df = pd.DataFrame({
+    futurepredictions_df = pd.DataFrame({
         'Month': future_input['Month'],
         'Year': future_input['Year'],
         'Predicted Phosphate Price (MLR)': pred_mlr_future,
@@ -382,44 +397,49 @@ def prednextyear():
     #predictions_df['Month'] = predictions_df['Month'].map(month_mapping)
 
     # Display the predicted prices for the next 12 months
-    predictions_df
+    futurepredictions_df
 
+        # Create the function to generate the plot as an image response
 
-    # Load the data from the CSV file
-    data = pd.read_csv('predicted_prices_vf.csv')
+    def plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data):
+            fig = Figure(figsize=(10, 6))
+            ax = fig.add_subplot(111)
+            
+            # Plotting the data
+            ax.plot(months_years, pred_mlr_future, marker='o', label='MLR')
+            ax.plot(months_years, pred_tr_future, marker='o', label='Decision Tree')
+            ax.plot(months_years, pred_rf_future, marker='o', label='Random Forest')
+            ax.plot(months_years, actual_data, marker='o', label='Actual Data')  # Adding actual data to the plot
+            
+            ax.set_xlabel('Month and Year')
+            ax.set_ylabel('Predicted Phosphate Price')
+            ax.set_title('Predicted Phosphate Prices by Model')
+            ax.legend()
+            ax.set_xticklabels(months_years, rotation=45)  # Set x-axis tick labels
 
-    # Combine 'Month' and 'Year' columns for the x-axis labels
-    months_years = data['Month'] + ' ' + data['Year'].astype(str)
+            canvas = FigureCanvas(fig)
+            output = io.BytesIO()
+            canvas.print_png(output)
+            return Response(output.getvalue(), mimetype='image/png')
 
-    # Extract data for plotting
-    predicted_mlr = data['Predicted Phosphate Price (MLR)']
-    predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
-    predicted_rf = data['Predicted Phosphate Price (Random Forest)']
-    # Create a line plot
-    plt.figure(figsize=(10, 6))
-
-    plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
-    plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
-    plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
-
-    plt.xlabel('Month and Year')
-    plt.ylabel('Predicted Phosphate Price')
-    plt.title('Predicted Phosphate Prices by Model')
-    plt.legend()
-    plt.xticks(rotation=45)
-    # Customize y-axis tick locations and labels
-    plt.yticks(range(100, 401, 100))  # Adjust the range as needed
-
-    plt.tight_layout()
-
-    plt.show()
-
-
-    current_date = datetime.now()
-    prediction_date = (current_date + timedelta(days=30)).strftime("%B")  # Get the next month
-
+    # Combine 'Month' and 'Year' columns to create 'months_years'
+    futurepredictions_df['months_years'] = futurepredictions_df['Month'] + ' ' + futurepredictions_df['Year'].astype(str)
     
-    return render_template("public/prednextyear.html",predictions_df=predictions_df)
+    # Extract data for plotting
+    pred_mlr_future = futurepredictions_df['Predicted Phosphate Price (MLR)']
+    pred_tr_future = futurepredictions_df['Predicted Phosphate Price (Decision Tree)']
+    pred_rf_future = futurepredictions_df['Predicted Phosphate Price (Random Forest)']
+    actual_data = futurepredictions_df['Actual_Data']  # Use the actual data column
+
+    # Create the months_years variable by combining 'Month' and 'Year' columns
+    months_years = futurepredictions_df['months_years']
+
+    # Call the plot_to_image function with the required arguments
+    plot_response = plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data)
+
+    return render_template("public/predpastyear.html", futurepredictions_df=futurepredictions_df, plot_response=plot_response)
+
+
 
 
 if __name__ == '__main__':

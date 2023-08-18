@@ -224,16 +224,20 @@ def predpastyear():
 
 
         actual_data = pd.read_csv('phosphate36.csv')['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-12:].values
+        # Round the predicted prices for MLR and Random Forest
+        rounded_pred_mlr_future = pred_mlr_future.round(2)
+        rounded_pred_rf_future = pred_rf_future.round(2)
 
-        # Create a DataFrame to store the predicted prices for the next 12 months
+        # Create the futurepredictions_df DataFrame
         futurepredictions_df = pd.DataFrame({
             'Month': future_input['Month'],
             'Year': future_input['Year'],
-            'Predicted Phosphate Price (MLR)': pred_mlr_future,
+            'Predicted Phosphate Price (MLR)': rounded_pred_mlr_future,
             'Predicted Phosphate Price (Decision Tree)': pred_tr_future,
-            'Predicted Phosphate Price (Random Forest)': pred_rf_future,
-            'actual_data' : actual_data
+            'Predicted Phosphate Price (Random Forest)': rounded_pred_rf_future,
+            'actual_data': actual_data
         })
+
 
 
         # Map the numerical month values back to month names
@@ -253,28 +257,57 @@ def predpastyear():
 
         # Create the function to generate the plot as an image response
 
+        futurepredictions_df.to_csv('predicted_prices_vf.csv', index=False)
 
-        # Combine 'Month' and 'Year' columns to create 'months_years'
-        futurepredictions_df['months_years'] = futurepredictions_df['Month'] + ' ' + futurepredictions_df['Year'].astype(str)
         
+        data = pd.read_csv('predicted_prices_vf.csv')
+
+        # Combine 'Month' and 'Year' columns for the x-axis labels
+        months_years = data['Month'] + ' ' + data['Year'].astype(str)
+
         # Extract data for plotting
-        pred_mlr_future = futurepredictions_df['Predicted Phosphate Price (MLR)']
-        pred_tr_future = futurepredictions_df['Predicted Phosphate Price (Decision Tree)']
-        pred_rf_future = futurepredictions_df['Predicted Phosphate Price (Random Forest)']
-        actual_data = futurepredictions_df['actual_data']  # Use the actual data column
+        predicted_mlr = data['Predicted Phosphate Price (MLR)']
+        predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
+        predicted_rf = data['Predicted Phosphate Price (Random Forest)']
+        actual_data = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-12:].values
+        actual_data
+        # Calculate the accuracy for each algorithm
+        data['MLR Accuracy'] = (100 * (1 - abs(data['Predicted Phosphate Price (MLR)'] - actual_data) / actual_data)).round(2)
+        data['Decision Tree Accuracy'] = (100 * (1 - abs(data['Predicted Phosphate Price (Decision Tree)'] - actual_data) / actual_data)).round(2)
+        data['Random Forest Accuracy'] = (100 * (1 - abs(data['Predicted Phosphate Price (Random Forest)'] - actual_data) / actual_data)).round(2)
 
-        # Create the months_years variable by combining 'Month' and 'Year' columns
-        months_years = futurepredictions_df['months_years']
+        # Add the accuracy columns to the futurepredictions_df DataFrame
+        futurepredictions_df['MLR Accuracy'] = data['MLR Accuracy']
+        futurepredictions_df['Decision Tree Accuracy'] = data['Decision Tree Accuracy']
+        futurepredictions_df['Random Forest Accuracy'] = data['Random Forest Accuracy']
 
-        # Call the plot_to_image function with the required arguments
-        plot_filename = "static/plot.png"
+        # Create a line plot
+        plt.figure(figsize=(10, 6))
+
+        plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
+        plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
+        plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+        plt.plot(months_years, actual_data, marker='o', label='actual data')
+
+        plt.xlabel('Month and Year')
+        plt.ylabel('Predicted Phosphate Price')
+        plt.title('Predicted Phosphate Prices by Model')
+        plt.legend()
+        plt.xticks(rotation=45)
+        # Customize y-axis tick locations and labels
+        plt.yticks(range(100, 401, 200))  # Adjust the range as needed
+
+        plt.tight_layout()
+        # Save the plot as a PNG file in the /static directory
+        plot_filename = 'static/plot.png'
+        plt.savefig(plot_filename)
         plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data, plot_filename)
 
         return render_template("public/predpastyear.html", futurepredictions_df=futurepredictions_df, plot_filename=plot_filename)
 
 
 def plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data, filename):
-    fig = Figure(figsize=(10, 6))
+    fig = Figure(figsize=(12, 8))
     ax = fig.add_subplot(111)
     
     # ... Your plot code here ...
@@ -329,8 +362,16 @@ def predpastmonth():
     df = pd.DataFrame(df, columns=['Mois','Phosphate Price (Dollars américains par tonne métrique)','Diesel Price (Dollars US par gallon)','Phosphate ROC','Diesel ROC','Phosphate/Diesel Price Ratio'])
     actual_price_str = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-1]
     actual_price = float(actual_price_str.replace(',', '.'))
+    abs_percent_error_mlr = abs((pred_mlr_july - actual_price) / actual_price) * 100
+    abs_percent_error_tr = abs((pred_tr_july - actual_price) / actual_price) * 100
+    abs_percent_error_rf = abs((pred_rf_july - actual_price) / actual_price) * 100
 
-    return render_template("public/predpastmonth.html",pred_mlr_july= pred_mlr_july,pred_tr_july= pred_tr_july,pred_rf_july= pred_rf_july, actual_price=actual_price)
+    # Calculate the accuracy for each model (100 - absolute percentage error)
+    accuracy_mlr = 100 - abs_percent_error_mlr
+    accuracy_tr = 100 - abs_percent_error_tr
+    accuracy_rf = 100 - abs_percent_error_rf
+
+    return render_template("public/predpastmonth.html", pred_mlr_july=pred_mlr_july, pred_tr_july=pred_tr_july, pred_rf_july=pred_rf_july, actual_price=actual_price, accuracy_mlr=accuracy_mlr, accuracy_tr=accuracy_tr, accuracy_rf=accuracy_rf)
 
 
 
@@ -385,59 +426,103 @@ def prednextyear():
     pred_rf_future = rf_regressor.predict(future_input_scaled)
 
     # Create a DataFrame to store the predicted prices for the next 12 months
-    futurepredictions_df = pd.DataFrame({
+
+
+    # Round the predicted prices for MLR and Random Forest
+    rounded_pred_mlr_future = pred_mlr_future.round(2)
+    rounded_pred_rf_future = pred_rf_future.round(2)
+
+    # Create the futurepredictions_df DataFrame
+    futurepredictionss_df = pd.DataFrame({
         'Month': future_input['Month'],
         'Year': future_input['Year'],
-        'Predicted Phosphate Price (MLR)': pred_mlr_future,
+        'Predicted Phosphate Price (MLR)': rounded_pred_mlr_future,
         'Predicted Phosphate Price (Decision Tree)': pred_tr_future,
-        'Predicted Phosphate Price (Random Forest)': pred_rf_future
+        'Predicted Phosphate Price (Random Forest)': rounded_pred_rf_future,
     })
+
+
 
     # Map the numerical month values back to month names
     #predictions_df['Month'] = predictions_df['Month'].map(month_mapping)
+    # Define a dictionary to map numerical month values to month names
+    reverse_month_mapping = {1: 'January', 2: 'February', 3: 'March', 4: 'April', 5: 'May', 6: 'June',
+                            7: 'July', 8: 'August', 9: 'September', 10: 'October', 11: 'November', 12: 'December'}
+
+    # Map the numerical month values back to month names
+    futurepredictionss_df['Month'] = futurepredictionss_df['Month'].map(reverse_month_mapping)
+
 
     # Display the predicted prices for the next 12 months
-    futurepredictions_df
 
-        # Create the function to generate the plot as an image response
 
-    def plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data):
-            fig = Figure(figsize=(10, 6))
-            ax = fig.add_subplot(111)
-            
-            # Plotting the data
-            ax.plot(months_years, pred_mlr_future, marker='o', label='MLR')
-            ax.plot(months_years, pred_tr_future, marker='o', label='Decision Tree')
-            ax.plot(months_years, pred_rf_future, marker='o', label='Random Forest')
-            ax.plot(months_years, actual_data, marker='o', label='Actual Data')  # Adding actual data to the plot
-            
-            ax.set_xlabel('Month and Year')
-            ax.set_ylabel('Predicted Phosphate Price')
-            ax.set_title('Predicted Phosphate Prices by Model')
-            ax.legend()
-            ax.set_xticklabels(months_years, rotation=45)  # Set x-axis tick labels
 
-            canvas = FigureCanvas(fig)
-            output = io.BytesIO()
-            canvas.print_png(output)
-            return Response(output.getvalue(), mimetype='image/png')
+    # Create the function to generate the plot as an image response
 
-    # Combine 'Month' and 'Year' columns to create 'months_years'
-    futurepredictions_df['months_years'] = futurepredictions_df['Month'] + ' ' + futurepredictions_df['Year'].astype(str)
+    futurepredictionss_df.to_csv('predicted_prices_vfff.csv', index=False)
+
     
+    data = pd.read_csv('predicted_prices_vfff.csv')
+
+    # Combine 'Month' and 'Year' columns for the x-axis labels
+    months_years = data['Month'] + ' ' + data['Year'].astype(str)
+
     # Extract data for plotting
-    pred_mlr_future = futurepredictions_df['Predicted Phosphate Price (MLR)']
-    pred_tr_future = futurepredictions_df['Predicted Phosphate Price (Decision Tree)']
-    pred_rf_future = futurepredictions_df['Predicted Phosphate Price (Random Forest)']
-    actual_data = futurepredictions_df['Actual_Data']  # Use the actual data column
+    predicted_mlr = data['Predicted Phosphate Price (MLR)']
+    predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
+    predicted_rf = data['Predicted Phosphate Price (Random Forest)']
+    # Calculate the accuracy for each algorithm
 
-    # Create the months_years variable by combining 'Month' and 'Year' columns
-    months_years = futurepredictions_df['months_years']
 
-    # Call the plot_to_image function with the required arguments
-    plot_response = plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data)
+    # Create a line plot
+    plt.figure(figsize=(10, 6))
 
-    return render_template("public/predpastyear.html", futurepredictions_df=futurepredictions_df, plot_response=plot_response)
+    plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
+    plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
+    plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+
+    plt.xlabel('Month and Year')
+    plt.ylabel('Predicted Phosphate Price')
+    plt.title('Predicted Phosphate Prices by Model')
+    plt.legend()
+    plt.xticks(rotation=45)
+    # Customize y-axis tick locations and labels
+    plt.yticks(range(100, 401, 200))  # Adjust the range as needed
+
+    plt.tight_layout()
+    # Save the plot as a PNG file in the /static directory
+    plot_filename = 'static/plotfuture.png'
+    plt.savefig(plot_filename)
+    plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future,  plot_filename)
+    plt.close()  # Close the current plot
+
+    return render_template("public/prednextyear.html", futurepredictionss_df=futurepredictionss_df, plot_filename=plot_filename)
+
+
+def plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, filename):
+    fig = Figure(figsize=(12, 8))
+    ax = fig.add_subplot(111)
+
+    # ... Your plot code here ...
+            # Plotting the data
+    ax.plot(months_years, pred_mlr_future, marker='o', label='MLR')
+    ax.plot(months_years, pred_tr_future, marker='o', label='Decision Tree')
+    ax.plot(months_years, pred_rf_future, marker='o', label='Random Forest')
+            
+    ax.set_xlabel('Month and Year')
+    ax.set_ylabel('Predicted Phosphate Price')
+    ax.set_title('Predicted Phosphate Prices by Model')
+    ax.legend()
+    ax.set_xticklabels(months_years, rotation=45)
+
+    # Save the plot to a file
+    fig.savefig(filename)
+
+
+
+
+
+
 
 
 

@@ -1,6 +1,6 @@
 {% extends "public/templates/base_public.html" %}
 
-{% block title %}OCP - Phosphates Price Preditcion{% endblock title %}
+{% block title %}OCP - Phosphates Price Prediction{% endblock title %}
 
 {% block nav %}
 <header>
@@ -24,7 +24,7 @@
 <div class="container">
   <div class="row">
     <div class="col">
-      <h2 style="text-align:center">Phosphates Price Prediction - NEXT YEAR </h2>
+      <h2 style="text-align:center">Phosphates Price Prediction - NEXT YEAR</h2>
     </div>
   </div>
 </div>
@@ -32,12 +32,51 @@
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
 <div class="modifier">
-  <h3 style="font-size: 20px; text-align:center">Results of prediction using - Linear Regression - Tree Regressor - Random Forest Model - </h3>
-  <h4><strong> From August 2023 to July 2024 </strong></h4>
-  <br>
-  <p>{{ futurepredictions_df }} </p>
+  <h3 style="font-size: 20px; text-align:center">Results of prediction using  </h3>
 
-#ADD PLOT </div>
+  <h3 style="font-size: 20px; text-align:center"> - Linear Regression - Tree Regressor - Random Forest Model -  </h3>
+  <br>
+
+  <h4><strong> <center>August 2023 to July 2024 </center></strong></h4>
+  
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th>Year</th>
+
+        <th>Predicted Phosphate Price (MLR)</th>
+
+        <th>Predicted Phosphate Price (Decision Tree)</th>
+
+        <th>Predicted Phosphate Price (Random Forest)</th>
+
+      </tr>
+    </thead>
+    <tbody>
+      {% for index, row in futurepredictionss_df.iterrows() %}
+        <tr>
+          <td>{{ row['Month'] }}</td>
+          <td>{{ row['Year'] }}</td>
+
+          <td>{{ row['Predicted Phosphate Price (MLR)'] }}</td>
+
+          <td>{{ row['Predicted Phosphate Price (Decision Tree)'] }}</td>
+
+          <td>{{ row['Predicted Phosphate Price (Random Forest)'] }}</td>
+
+
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<br><br>
+
+
+<!-- Display the plot using an image tag -->
+<center><img src="static/plotfuture.png" alt="Plot" height="500px" width="800px"></center>
 
 <br><br><br><br><br>
 

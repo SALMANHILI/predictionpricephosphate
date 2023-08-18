@@ -44,10 +44,17 @@
       <tr>
         <th>Month</th>
         <th>Year</th>
-        <th>Predicted Phosphate Price (MLR)</th>
-        <th>Predicted Phosphate Price (Decision Tree)</th>
-        <th>Predicted Phosphate Price (Random Forest)</th>
         <th>Actual Data</th>
+
+        <th>Predicted Phosphate Price (MLR)</th>
+        <th>MLR Accuracy</th>
+
+        <th>Predicted Phosphate Price (Decision Tree)</th>
+        <th>Decision Tree Accuracy</th>
+
+        <th>Predicted Phosphate Price (Random Forest)</th>
+        <th>Random Forest Accuracy</th>
+
       </tr>
     </thead>
     <tbody>
@@ -55,10 +62,17 @@
         <tr>
           <td>{{ row['Month'] }}</td>
           <td>{{ row['Year'] }}</td>
-          <td>{{ row['Predicted Phosphate Price (MLR)'] }}</td>
-          <td>{{ row['Predicted Phosphate Price (Decision Tree)'] }}</td>
-          <td>{{ row['Predicted Phosphate Price (Random Forest)'] }}</td>
           <td>{{ row['actual_data'] }}</td>
+
+          <td>{{ row['Predicted Phosphate Price (MLR)'] }}</td>
+          <td>{{ row['MLR Accuracy'] }}</td>
+
+          <td>{{ row['Predicted Phosphate Price (Decision Tree)'] }}</td>
+          <td>{{ row['Decision Tree Accuracy'] }}</td>
+
+          <td>{{ row['Predicted Phosphate Price (Random Forest)'] }}</td>
+          <td>{{ row['Random Forest Accuracy'] }}</td>
+
         </tr>
       {% endfor %}
     </tbody>

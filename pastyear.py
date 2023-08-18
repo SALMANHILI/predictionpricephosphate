@@ -178,8 +178,6 @@ predictions_df.to_csv('predicted_prices_vf.csv', index=False)
 
 # %%
 import matplotlib.pyplot as plt
-
-# Load the data from the CSV file
 data = pd.read_csv('predicted_prices_vf.csv')
 
 # Combine 'Month' and 'Year' columns for the x-axis labels
@@ -189,6 +187,7 @@ months_years = data['Month'] + ' ' + data['Year'].astype(str)
 predicted_mlr = data['Predicted Phosphate Price (MLR)']
 predicted_tree = data['Predicted Phosphate Price (Decision Tree)']
 predicted_rf = data['Predicted Phosphate Price (Random Forest)']
+actual_data = df['Phosphate Price (Dollars américains par tonne métrique)'].iloc[-12:].values
 actual_data
 # Create a line plot
 plt.figure(figsize=(10, 6))
@@ -196,6 +195,7 @@ plt.figure(figsize=(10, 6))
 plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
 plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
 plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+plt.plot(months_years, actual_data, marker='o', label='actual data')
 
 plt.xlabel('Month and Year')
 plt.ylabel('Predicted Phosphate Price')
@@ -206,7 +206,9 @@ plt.xticks(rotation=45)
 plt.yticks(range(100, 401, 100))  # Adjust the range as needed
 
 plt.tight_layout()
-
+# Save the plot as a PNG file in the /static directory
+plot_filename = 'static/plot.png'
+plt.savefig(plot_filename)
 plt.show()
 
 # %%

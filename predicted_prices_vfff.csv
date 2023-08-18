@@ -1,0 +1,13 @@
+Month,Year,Predicted Phosphate Price (MLR),Predicted Phosphate Price (Decision Tree),Predicted Phosphate Price (Random Forest)
+August,2023,337.1,322.5,341.73
+September,2023,374.97,322.5,334.98
+October,2023,192.23,344.5,256.25
+November,2023,266.56,300.0,285.43
+December,2023,328.62,300.0,308.77
+January,2024,259.89,345.0,313.45
+February,2024,354.52,322.5,336.14
+March,2024,372.7,322.5,333.55
+April,2024,205.82,345.0,255.75
+May,2024,247.91,320.0,284.48
+June,2024,293.11,300.0,288.68
+July,2024,335.04,322.5,314.36

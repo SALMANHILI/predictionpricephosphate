@@ -1,11 +1,11 @@
 body {
     font-family: Arial, sans-serif;
-    background-color: #f2f2f2;
+    background-color: white;
     margin: 0;
   }
   
   header {
-    background-color: #272435;
+    background-color: #45583F;
     color: #fff;
     padding: 10px;
     display: flex;
@@ -52,7 +52,7 @@ nav ul li:nth-child(7) {
 
 nav ul li:nth-child(6) a,
 nav ul li:nth-child(7) a {
-  background-color: #4CAF50;
+  background-color: #45583F;
   color: white;
   padding: 10px;
   border-radius: 5px;
@@ -134,14 +134,14 @@ nav ul li:nth-child(7) a:hover {
   }
   
   .button {
-    background-color: #4CAF50;
+    background-color: #45583F;
     border: none;
     color: white;
-    padding: 10px;
+    padding: 15px 30px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
-    font-size: 14px;
+    font-size: 16px;
     margin: 4px 2px;
     cursor: pointer;
     border-radius: 5px;
@@ -212,6 +212,12 @@ nav ul li:nth-child(7) a:hover {
     padding-left:40px;
     padding-right: 40px;
   }
-  
+  .line {
+    width: 900px;
+    height: 20px; /* Adjust the thickness as needed */
+    background-color: #45583F;
+    margin: 20px auto; /* Center the line horizontally */
+}
+
 
 

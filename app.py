@@ -117,6 +117,12 @@ def index():
     actual_price = float(actual_price_str.replace(',', '.'))
     return render_template('public/index.html', actual_price=actual_price)
    
+@app.route("/about")
+def about():
+
+    return render_template('public/about.html')
+   
+
 
 
 
@@ -493,13 +499,13 @@ def prednextyear():
     # Save the plot as a PNG file in the /static directory
     plot_filename = 'static/plotfuture.png'
     plt.savefig(plot_filename)
-    plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future,  plot_filename)
+    plot_to_images(months_years, pred_mlr_future, pred_tr_future, pred_rf_future,  plot_filename)
     plt.close()  # Close the current plot
 
     return render_template("public/prednextyear.html", futurepredictionss_df=futurepredictionss_df, plot_filename=plot_filename)
 
 
-def plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, filename):
+def plot_to_images(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, filename):
     fig = Figure(figsize=(12, 8))
     ax = fig.add_subplot(111)
 

@@ -107,6 +107,18 @@ month_mapping = {'January': 1, 'February': 2, 'March': 3, 'April': 4, 'May': 5, 
 # Map the month names
 
 df['Month'] = df['Month'].apply(lambda x: month_mapping[re.search(r'[a-zA-Zéû]+', str(x)).group()] if pd.notnull(x) else x)
+"""
+# Remove the last row
+df_year = df.iloc[:-12]
+df_month = df.iloc[:-1]
+
+
+# Save the processed DataFrame to a new CSV file
+output_filename = "processed_year.csv"
+df_year.to_csv(output_filename, index=False)
+
+output_filename = "processed_month.csv"
+df_month.to_csv(output_filename, index=False)"""
 
 
 @app.route("/index")
@@ -335,9 +347,6 @@ def plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future,
 
 
 
-            
-
-
 
 
 @app.route("/predpastmonth", methods=['GET', 'POST'])
@@ -378,7 +387,6 @@ def predpastmonth():
     accuracy_rf = 100 - abs_percent_error_rf
 
     return render_template("public/predpastmonth.html", pred_mlr_july=pred_mlr_july, pred_tr_july=pred_tr_july, pred_rf_july=pred_rf_july, actual_price=actual_price, accuracy_mlr=accuracy_mlr, accuracy_tr=accuracy_tr, accuracy_rf=accuracy_rf)
-
 
 
 

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, url_for, flash, redirect, request
+from flask import Flask, render_template, jsonify, send_file, url_for, flash, redirect, request
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, BooleanField
 from wtforms.validators import DataRequired, length, Email, Regexp, EqualTo
@@ -136,44 +136,14 @@ def about():
    
 
 
+@app.route("/powerbi",methods=['GET', 'POST'])
+def powerbi():
+
+    return render_template('public/powerbi.html')
 
 
-class inscrireform(FlaskForm):
-    fname = StringField('First Name',validators=[DataRequired(),length(min=2,max=25)])
-    lname = StringField('Last Name',validators=[DataRequired(),length(min=2,max=25)])
-    username = StringField('Username',validators=[DataRequired(),length(min=2,max=25)])
-    email = StringField("Email",validators=[DataRequired(),Email()])
-    password = PasswordField('Password',validators=[DataRequired(),Regexp("^(?=.*[A-Z])(?=.*[a-z])(?=.*[@$!%*?&_])[A-Za-z\d@$!%*?&_]{8,32}$")])
-    confirm_password = PasswordField('Confirm_password',validators=[DataRequired(),EqualTo('password')])
-    submit = SubmitField("Sign Up")
-
-class loginform(FlaskForm):
-    
-    email = StringField("Email",validators=[DataRequired(),Email()])
-    password = PasswordField("Password",validators=[DataRequired()])
-    remember = BooleanField('Remember Me') 
-    submit = SubmitField("Login")
 
 
-@app.route("/login",methods=["GET","POST"])
-def login():
-    form= loginform()
-    if form.validate_on_submit():
-        if form.email.data =='ouyoussmeryem@gmail.com' and form.password.data == "PASS??word123":
-            flash("You have been logged in !!","success")
-            return redirect("/index")
-        else :
-            flash("Login Unsuccessful , please check credentials","danger")
-    return render_template("public/login.html",form=form)
-
-
-@app.route("/inscrire",methods=["GET","POST"])
-def inscrire():
-    form= inscrireform()
-    if form.validate_on_submit():
-        flash(f"Account created successfully for {form.username.data}","success")
-        return redirect("/index")
-    return render_template("public/inscription.html",form=form)
 
 
 # X (independent variables) and y (target variable)
@@ -299,54 +269,7 @@ def predpastyear():
         futurepredictions_df['Decision Tree Accuracy'] = data['Decision Tree Accuracy']
         futurepredictions_df['Random Forest Accuracy'] = data['Random Forest Accuracy']
 
-        # Create a line plot
-        plt.figure(figsize=(10, 6))
-
-        plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
-        plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
-        plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
-        plt.plot(months_years, actual_data, marker='o', label='actual data')
-
-        plt.xlabel('Month and Year')
-        plt.ylabel('Predicted Phosphate Price')
-        plt.title('Predicted Phosphate Prices by Model')
-        plt.legend()
-        plt.xticks(rotation=45)
-        # Customize y-axis tick locations and labels
-        plt.yticks(range(100, 401, 200))  # Adjust the range as needed
-
-        plt.tight_layout()
-        # Save the plot as a PNG file in the /static directory
-        plot_filename = 'static/plot.png'
-        plt.savefig(plot_filename)
-        plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data, plot_filename)
-
-        return render_template("public/predpastyear.html", futurepredictions_df=futurepredictions_df, plot_filename=plot_filename)
-
-
-def plot_to_image(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, actual_data, filename):
-    fig = Figure(figsize=(12, 8))
-    ax = fig.add_subplot(111)
-    
-    # ... Your plot code here ...
-            # Plotting the data
-    ax.plot(months_years, pred_mlr_future, marker='o', label='MLR')
-    ax.plot(months_years, pred_tr_future, marker='o', label='Decision Tree')
-    ax.plot(months_years, pred_rf_future, marker='o', label='Random Forest')
-    ax.plot(months_years, actual_data, marker='o', label='Actual Data')  # Adding actual data to the plot
-            
-    ax.set_xlabel('Month and Year')
-    ax.set_ylabel('Predicted Phosphate Price')
-    ax.set_title('Predicted Phosphate Prices by Model')
-    ax.legend()
-    ax.set_xticklabels(months_years, rotation=45)
-
-    # Save the plot to a file
-    fig.savefig(filename)
-
-
-
-
+        return render_template("public/predpastyear.html", futurepredictions_df=futurepredictions_df)
 
 
 @app.route("/predpastmonth", methods=['GET', 'POST'])
@@ -488,52 +411,15 @@ def prednextyear():
     # Calculate the accuracy for each algorithm
 
 
-    # Create a line plot
-    plt.figure(figsize=(10, 6))
+    return render_template("public/prednextyear.html", futurepredictionss_df=futurepredictionss_df)
 
-    plt.plot(months_years, predicted_mlr, marker='o', label='MLR')
-    plt.plot(months_years, predicted_tree, marker='o', label='Decision Tree')
-    plt.plot(months_years, predicted_rf, marker='o', label='Random Forest')
+@app.route('/predicted_prices_vfff.csv')
+def serve_csv():
+    return send_file('predicted_prices_vfff.csv')
 
-    plt.xlabel('Month and Year')
-    plt.ylabel('Predicted Phosphate Price')
-    plt.title('Predicted Phosphate Prices by Model')
-    plt.legend()
-    plt.xticks(rotation=45)
-    # Customize y-axis tick locations and labels
-    plt.yticks(range(100, 401, 200))  # Adjust the range as needed
-
-    plt.tight_layout()
-    # Save the plot as a PNG file in the /static directory
-    plot_filename = 'static/plotfuture.png'
-    plt.savefig(plot_filename)
-    plot_to_images(months_years, pred_mlr_future, pred_tr_future, pred_rf_future,  plot_filename)
-    plt.close()  # Close the current plot
-
-    return render_template("public/prednextyear.html", futurepredictionss_df=futurepredictionss_df, plot_filename=plot_filename)
-
-
-def plot_to_images(months_years, pred_mlr_future, pred_tr_future, pred_rf_future, filename):
-    fig = Figure(figsize=(12, 8))
-    ax = fig.add_subplot(111)
-
-    # ... Your plot code here ...
-            # Plotting the data
-    ax.plot(months_years, pred_mlr_future, marker='o', label='MLR')
-    ax.plot(months_years, pred_tr_future, marker='o', label='Decision Tree')
-    ax.plot(months_years, pred_rf_future, marker='o', label='Random Forest')
-            
-    ax.set_xlabel('Month and Year')
-    ax.set_ylabel('Predicted Phosphate Price')
-    ax.set_title('Predicted Phosphate Prices by Model')
-    ax.legend()
-    ax.set_xticklabels(months_years, rotation=45)
-
-    # Save the plot to a file
-    fig.savefig(filename)
-
-
-
+@app.route('/predicted_prices_vf.csv')
+def servenext_csv():
+    return send_file('predicted_prices_vf.csv')
 
 
 
@@ -543,5 +429,3 @@ def plot_to_images(months_years, pred_mlr_future, pred_tr_future, pred_rf_future
 
 if __name__ == '__main__':
     app.run(debug=True)
-
-  

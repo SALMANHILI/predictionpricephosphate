@@ -1,10 +1,12 @@
 {% extends "public/templates/base_public.html" %}
-{% block title %}PPP - Power BI{% endblock title %}
+{% block title %}PPP - powerBI{% endblock title %}
 {% block nav %}
 <head>
 	<title>Phosphate Price Prediction</title>
 	<!-- Include ECharts library -->
-	<script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script>
+  <script src="https://fastly.jsdelivr.net/npm/jquery"></script>
+  <script src="https://fastly.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  
 </head>
 <header>
     <h1>PPP</h1>
@@ -14,109 +16,98 @@
         <li><a href="/index">Home</a></li>
         <li><a href="/about">About Us</a></li>
         
-        <li><a href="">Contact Us</a></li>
-        <li><a href="/login">PowerBI shots</a></li>
+        <li><a href="https://www.ocpgroup.ma">Contact Us</a></li>
+        <li><a href="/powerBI">PowerBI shots</a></li>
       </ul>
     </nav>
   </div>
   </header>
 {% endblock nav %}
 {% block content %}
-
-
-<!-- Display the plot using an image tag -->
+<br><br>
 <center>
+<h2>Phosphate and Diesel Prices by Month</h2>
+<br><br>
+<div id="chart-container" style="width: 800px; height: 600px;"></div>
+<h4>For more charts, download the report file by clicking on the link bellow :</h4>
+<br>
+<a class="button" href="phosphates.pdf" download>Download PDF File</a>
+</center>
+<script>
+// Load the data from the CSV file
+fetch('phosphate360.csv')
+  .then(response => response.text())
+  .then(csvData => {
+    var lines = csvData.trim().split('\n');
+    var monthsYears = [];
+    var phosphate_Roc = [];
+    var diesel_Roc = [];
 
-    <br><br>
-  <h2>Predicted Phosphate Prices by Model</h2>
-  <br><br>
-  <div id="chart-container" style="width: 800px; height: 600px;"></div>
-  <br>
-  <script>
-  // Sample options for the ECharts chart
-  var option = {
-    title: {
-      text: ''
-    },
-    tooltip: {
-      trigger: 'axis'
-    },
-    legend: {
-      data: ['MLR', 'Decision Tree', 'Random Forest', 'Actual Data']
-    },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      containLabel: true
-    },
-    xAxis: {
-      type: 'category',
-      boundaryGap: false,
-      data: []  // Update with actual month-year data
-    },
-    yAxis: {
-      type: 'value',
-    },
-    series: [
-      {
-        name: 'MLR',
-        type: 'line',
-        data: []  // Update with actual predicted_mlr data
+    // Loop through each line and extract the data
+    for (var i = 1; i < lines.length; i++) {
+      var parts = lines[i].split(',');
+      monthsYears.push(parts[0]);
+      phosphate_Roc.push(parseFloat(parts[3].replace('"', '').replace(',', '')));
+      diesel_Roc.push(parseFloat(parts[4].replace('"', '')));
+    }
+
+    // Create the ECharts option using the loaded data
+    var option = {
+      title: {
+        text: ''
       },
-      {
-        name: 'Decision Tree',
-        type: 'line',
-        data: []  // Update with actual predicted_tree data
+      tooltip: {
+        trigger: 'axis'
       },
-      {
-        name: 'Random Forest',
-        type: 'line',
-        data: []  // Update with actual predicted_rf data
+      legend: {},
+      toolbox: {
+        show: true,
+        feature: {
+          dataZoom: {
+            yAxisIndex: 'none'
+          },
+          dataView: { readOnly: false },
+          magicType: { type: ['line', 'bar'] },
+          restore: {},
+          saveAsImage: {}
+        }
       },
-      {
-        name: 'Actual Data',
-        type: 'line',
-        data: []  // Update with actual data
-      }
-    ]
-  };
-  
-  // Load the data from the CSV file
-  fetch('predicted_prices_vf.csv')
-    .then(response => response.text())
-    .then(csvData => {
-      var lines = csvData.trim().split('\n');
-      var monthsYears = [];
-      var predictedMLR = [];
-      var predictedTree = [];
-      var predictedRF = [];
-      var actual_data = [];
-  
-      // Loop through each line and extract the data
-      for (var i = 1; i < lines.length; i++) {
-        var parts = lines[i].split(',');
-        monthsYears.push(parts[0] + ' ' + parts[1]);
-        predictedMLR.push(parseFloat(parts[2].replace('"', '').replace(',', '')));
-        predictedTree.push(parseFloat(parts[3].replace(',', '')));
-        predictedRF.push(parseFloat(parts[4].replace(',', '')));
-        actual_data.push(parseFloat(parts[5].replace('"', '')));
-      }
-  
-      // Update x-axis and series data
-      option.xAxis.data = monthsYears;
-      option.series[0].data = predictedMLR;
-      option.series[1].data = predictedTree;
-      option.series[2].data = predictedRF;
-      option.series[3].data = actual_data; 
-  
-      // Initialize and render the chart
-      var chart = echarts.init(document.getElementById('chart-container'));
-      chart.setOption(option);
-    })
-    .catch(error => console.error('Error fetching CSV data:', error));
-  </script></center>
-  <footer>
-  </footer>
-  
-  {% endblock content %}
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: monthsYears
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: {
+          formatter: '{value}'
+        }
+      },
+      series: [
+        {
+          name: 'Phosphate Price',
+          type: 'line',
+          data: phosphate_Roc
+        },
+        {
+          name: 'Diesel Price',
+          type: 'line',
+          data: diesel_Roc
+        }
+      ]
+    };
+
+    // Initialize the chart with the option
+    var myChart = echarts.init(document.getElementById('chart-container'));
+    myChart.setOption(option);
+  })
+  .catch(error => console.error('Error fetching CSV data:', error));
+</script>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+
+{% endblock content %}

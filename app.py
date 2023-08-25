@@ -1,7 +1,5 @@
 from flask import Flask, render_template, jsonify, send_file, url_for, flash, redirect, request
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField
-from wtforms.validators import DataRequired, length, Email, Regexp, EqualTo
 import pandas as pd
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -12,13 +10,8 @@ from email_validator import validate_email
 from datetime import datetime, timedelta
 from sklearn.ensemble import RandomForestRegressor
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-import tensorflow as tf
 from sklearn.metrics import explained_variance_score
-import seaborn as sns
 import re
-import seaborn as sns
 from sklearn.calibration import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -142,7 +135,13 @@ def powerbi():
     return render_template('public/powerbi.html')
 
 
+@app.route('/phosphate360.csv')
+def serveactual_csv():
+    return send_file('phosphate360.csv')
 
+@app.route('/phosphates.pdf')
+def serveactual_pdf():
+    return send_file('phosphates.pdf')
 
 
 

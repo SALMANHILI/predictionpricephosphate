@@ -2,6 +2,11 @@
 
 {% block title %}OCP - Phosphates Price Preditcion{% endblock title %}
 {% block nav %}
+<head>
+	<title>Phosphate Price Prediction</title>
+	<!-- Include ECharts library -->
+	<script src="https://cdn.jsdelivr.net/npm/echarts@5.3.0/dist/echarts.min.js"></script>
+</head>
 <header>
     <h1>PPP</h1>
     <div class="nav-links">
@@ -64,8 +69,103 @@
 
 <div class="line"></div>
 
+<center>
 
 
+<h2>Models Accuracies </h2>
+<br>
+<div id="chart-container" style="width: 600px; height: 400px;"></div>
+<br>
+<script>
+option = {
+  xAxis: {
+    name: 'Models',
+    data: ['MLR', 'TR', 'RF']
+  },
+  yAxis: {
+    name: 'Accuracy (%)'
+  },
+  dataGroupId: '',
+  animationDurationUpdate: 500,
+  series: {
+    type: 'bar',
+    id: 'sales',
+    data: [
+      {
+        value: 93,
+        groupId: 'MLR',
+        itemStyle: { color: '#45583F' },
+        label: { show: true, position: 'top' } // Show label on top of bar
+
+      },
+      {
+        value: 97,
+        groupId: 'TR',
+        itemStyle: { color: '#5F8345' }, // Set the color for TR bar
+        label: { show: true, position: 'top' } // Show label on top of bar
+
+        
+      },
+      {
+        value: 89,
+        groupId: 'RF',
+        itemStyle: { color: '#8DA082' }, // Set the color for RF bar
+        label: { show: true, position: 'top' } // Show label on top of bar
+
+      }
+    ],
+    universalTransition: {
+      enabled: true,
+      divideShape: 'clone'
+    }
+  }
+};
+var myChart = echarts.init(document.getElementById('chart-container'));
+myChart.setOption(option);
+
+myChart.on('click', function (event) {
+  if (event.data) {
+    var subData = drilldownData.find(function (data) {
+      return data.dataGroupId === event.data.groupId;
+    });
+    if (!subData) {
+      return;
+    }
+    myChart.setOption({
+      xAxis: {
+        data: subData.data.map(function (item) {
+          return item[0];
+        })
+      },
+      series: {
+        type: 'bar',
+        id: 'sales',
+        dataGroupId: subData.dataGroupId,
+        data: subData.data.map(function (item) {
+          return item[1];
+        }),
+        universalTransition: {
+          enabled: true,
+          divideShape: 'clone'
+        }
+      },
+      graphic: [
+        {
+          type: 'text',
+          left: 50,
+          top: 20,
+          style: {
+            text: 'Back',
+            fontSize: 18
+          },
+          onclick: function () {
+            myChart.setOption(option);
+          }
+        }
+      ]
+    });
+  }
+}); </script></center>
 
  <br><br>
  <br>

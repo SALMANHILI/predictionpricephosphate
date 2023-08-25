@@ -1,0 +1,4 @@
+model, accuraccy
+MLR, 93
+TR, 97
+RF, 89
